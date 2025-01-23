@@ -1,5 +1,5 @@
 # Usa la versión especificada en pyproject.toml
-FROM python:3.10-slim
+FROM python:3.13-alpine
 
 # Configuración del contenedor
 ENV PYTHONUNBUFFERED=1
