@@ -1,36 +1,21 @@
-# Usa la versión especificada en pyproject.toml
-FROM python:3.13-slim
+FROM python:3.13-alpine
 
-# Configuración del contenedor
 ENV PYTHONUNBUFFERED=1
+ENV ROOT_PATH=""
+RUN apk update && apk add --no-cache \
+    gcc \
+    musl-dev \
+    libpq-dev \
+    postgresql-dev \
+    && pip install --upgrade pip \
+    && pip install -U poetry \
+    && pip install gunicorn uvicorn[standard]
 
-# Instala dependencias del sistema necesarias para poetry
-RUN apt-get update && apt-get install -y \
-    curl \
-    python3-distutils \
-    python3-venv \
-    && apt-get clean
+WORKDIR /application/src
 
-# Instala Poetry
-RUN curl -sSL https://install.python-poetry.org | python3 - --disable-cache
+COPY ./pyproject.toml ./poetry.lock* /tmp/
+RUN poetry install --no-root
 
-# Añadir Poetry al PATH
-ENV PATH="/root/.local/bin:$PATH"
-
-# Crear directorio de trabajo
-WORKDIR /app
-
-# Copiar archivos de configuración de Poetry
-COPY pyproject.toml poetry.lock* ./
-
-# Instalar dependencias de Poetry
-RUN poetry install --no-root --only main
-
-# Copiar el código fuente al contenedor
-COPY src /app/
-
-# Exponer el puerto para la aplicación
+COPY ./src /application/src
 EXPOSE 9000
-
-# Comando para iniciar la aplicación
-CMD ["poetry", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "9000", "--workers", "2"]
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port 9000 --workers 1"]
