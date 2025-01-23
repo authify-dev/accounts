@@ -7,10 +7,12 @@ ENV PYTHONUNBUFFERED=1
 # Instala dependencias del sistema necesarias para poetry
 RUN apt-get update && apt-get install -y \
     curl \
+    python3-distutils \
+    python3-venv \
     && apt-get clean
 
 # Instala Poetry
-RUN curl -sSL https://install.python-poetry.org | python3 -
+RUN curl -sSL https://install.python-poetry.org | python3 - --disable-cache
 
 # Añadir Poetry al PATH
 ENV PATH="/root/.local/bin:$PATH"
