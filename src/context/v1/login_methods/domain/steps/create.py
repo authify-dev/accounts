@@ -34,6 +34,7 @@ class CreateLoginMethodStep(StepSAGA):
 class CreateLoginMethodEmailStep(StepSAGA):
     def __init__(self, repository: RepositoryInterface):
         self.repository = repository
+        self.login_method = None
 
     def __call__(self, payload: None = None, all_payloads: dict | None = None):  # noqa: ARG002
         user = all_payloads[CreateUserByUserNameStep]
