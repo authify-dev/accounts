@@ -93,7 +93,7 @@ class Settings(PydanticBaseSettings):
     PASSWORD_LOWERCASE_COUNT: int = 1
     PASSWORD_DIGIT_COUNT: int = 1
     PASSWORD_SPECIAL_CHAR_COUNT: int = 1
-    PASSWORD_SPECIAL_CHARS: str = '[!@#$%^&*(),.?":{}|<>]'
+    PASSWORD_SPECIAL_CHARS: str = '[!@#$%^&*(),.?":{}|<>]'  # noqa: S105
 
     PASSWORD_VALIDATIONS: list[str] = [
         "MIN_LENGTH",

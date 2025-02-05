@@ -19,7 +19,6 @@ router = APIRouter()
     "/health",
     status_code=status.HTTP_200_OK,
     summary="Health service",
-    response_model=ResponseEntity,
     tags=["Health"],
 )
 def health_check() -> ResponseEntity:

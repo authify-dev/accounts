@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from fastapi import HTTPException, Request, status
+from fastapi import Request, status
 from fastapi.params import Depends
 from sqlalchemy.orm import Session
 

@@ -66,6 +66,7 @@ ignore = [
     "FBT002", # Boolean default positional argument in function definition
     "PT009",  # Use asserts in test
     "ARG001", # TODO: add log to request
+    "A005",
 ]
 
 [tool.ruff.flake8-annotations]

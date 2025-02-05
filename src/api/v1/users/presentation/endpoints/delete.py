@@ -3,9 +3,6 @@ from uuid import UUID
 from fastapi import status
 
 from core.utils.logger import logger
-from core.utils.responses import (
-    EnvelopeResponse,
-)
 
 from .routers import router
 
