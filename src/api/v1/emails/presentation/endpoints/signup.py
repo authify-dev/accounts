@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from fastapi import Request, status
+from fastapi import HTTPException, Request, status
 from fastapi.params import Depends
 from sqlalchemy.orm import Session
 
@@ -16,6 +16,7 @@ from context.v1.login_methods.infrastructure.repositories.postgres.login_method 
 from context.v1.users.infrastructure.repositories.postgres.user import UserRepository
 from core.settings.database import get_session
 from core.utils.logger import logger
+from shared.app.errors.base import BaseError
 from shared.app.status_code import StatusCodes
 from shared.presentation.schemas.envelope_response import ResponseEntity
 
@@ -32,10 +33,7 @@ if TYPE_CHECKING:
     response_model=ResponseEntity,
 )
 async def signup(
-    request: Request,
-    payload: SignupEmailDto,
-    session: Session = Depends(get_session)
-
+    request: Request, payload: SignupEmailDto, session: Session = Depends(get_session)
 ):
     """
     Create a user registration via email.
@@ -62,7 +60,13 @@ async def signup(
         user_name=payload.user_name,
     )
 
-    new_entity: EmailEntity = use_case.execute(payload=entity)
+    try:
+        new_entity: EmailEntity = use_case.execute(payload=entity)
+    except BaseError as e:
+        return ResponseEntity(
+            data=e.message,
+            code=e.external_code,
+        )
 
     response = SignupEmailSchema(**new_entity.model_dump())
 
