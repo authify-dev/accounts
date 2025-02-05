@@ -4,7 +4,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: secret
-      POSTGRES_DB: jalo
+      POSTGRES_DB: unicon
     ports:
       - 5440:5432
     networks:

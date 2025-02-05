@@ -9,7 +9,7 @@
             "args": [
                 "main:app",
                 "--reload",
-                "--port", "7899"
+                "--port", "8000"
             ],
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}/src"
