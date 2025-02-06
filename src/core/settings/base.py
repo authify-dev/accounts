@@ -33,6 +33,7 @@ ENV_FILE_PATH = ENVS_DIR / EnvironmentsTypes.get_env_file_name(ENVIRONMENT)
 class Settings(PydanticBaseSettings):
     model_config = SettingsConfigDict(env_file=ENV_FILE_PATH, extra="ignore", case_sensitive=True)
     ENVIRONMENT: str = ENVIRONMENT
+    API_KEY: str
 
     # Project Constants
     # ----------------------------------------------------------------
