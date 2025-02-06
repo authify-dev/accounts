@@ -11,3 +11,13 @@ class AthorizationHeaderError(BaseError):
         self.message = self.__class__.internal_code.description
         super().__init__(self.message)
         logger.error(self.message)
+
+
+class InvalidApiKeyError(BaseError):
+    external_code = StatusCodes.HTTP_401_UNAUTHORIZED
+    internal_code = StatusCodes.APP_INVALID_API_KEY
+
+    def __init__(self) -> None:
+        self.message = self.__class__.internal_code.description
+        super().__init__(self.message)
+        logger.error(self.message)
