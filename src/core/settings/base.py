@@ -47,6 +47,12 @@ class Settings(PydanticBaseSettings):
     API_V1: str = "v1"
     CORS_ORIGINS: ClassVar[list[str]] = ["*"]
     SHOW_CRUDS_IN_SWAGGER_SCHEMA: bool = False
+    EMAIL_ACTIVATION_TEMPLATE_URL: str
+    EMAIL_ACTIVATION_TEMPLATE: str | None = None
+
+    EMAIL_WELCOME_TEMPLATE_URL: str
+    EMAIL_WELCOME_TEMPLATE: str | None = None
+
 
     # Database settings
     # ----------------------------------------------------------------

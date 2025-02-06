@@ -2,6 +2,7 @@
 import logging
 from logging.config import dictConfig
 
+import requests
 import sentry_sdk
 from pydantic import BaseModel
 
@@ -46,11 +47,35 @@ log = logging.getLogger(__name__)
 settings: Settings = Settings()
 
 email_manager = EmailManager(client=settings.EMAIL_CLIENT)
-email_client: SendEmailRepository = email_manager.client(EMAIL_SENDER=settings.EMAIL_SENDER, EMAIL_SENDER_PASSWORD=settings.EMAIL_SENDER_PASSWORD)
+email_client: SendEmailRepository = email_manager.client(
+    EMAIL_SENDER=settings.EMAIL_SENDER,
+    EMAIL_SENDER_PASSWORD=settings.EMAIL_SENDER_PASSWORD,
+)
 
-if settings.ENVIRONMENT in [EnvironmentsTypes.PRODUCTION.value.env_name, EnvironmentsTypes.STAGING.value.env_name]:
+if settings.ENVIRONMENT in [
+    EnvironmentsTypes.PRODUCTION.value.env_name,
+    EnvironmentsTypes.STAGING.value.env_name,
+]:
     sentry_sdk.init(
         dsn=settings.SENTRY_DSN,
         environment=settings.ENVIRONMENT,
         traces_sample_rate=0,
     )
+
+
+try:
+    settings.EMAIL_ACTIVATION_TEMPLATE = requests.get(
+        settings.EMAIL_ACTIVATION_TEMPLATE_URL,
+        timeout=3000,
+    ).text
+
+    settings.EMAIL_WELCOME_TEMPLATE = requests.get(
+        settings.EMAIL_WELCOME_TEMPLATE_URL,
+        timeout=3000,
+    ).text
+
+    log.info("Templates are up to date")
+except Exception:
+    log.exception("Error checking templates:")
+    log.exception("Please update the templates")
+    raise
