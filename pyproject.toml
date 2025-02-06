@@ -24,6 +24,7 @@ fastapi-pagination = "^0.12.14"
 cryptocode = "0.1"
 loguru = "0.7.2"
 mysql-connector-python = "^9.1.0"
+cryptography = "^44.0.0"
 
 [build-system]
 requires = ["poetry-core"]
