@@ -63,7 +63,7 @@ class CatcherExceptionsMiddleware(BaseHTTPMiddleware):
                     },
                 ]
 
-            if isinstance(e, HTTPException):
+            elif isinstance(e, HTTPException):
                 status_code = e.status_code
             elif isinstance(e, IntegrityError):
                 status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
