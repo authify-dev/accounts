@@ -1,14 +1,10 @@
-import uuid
 
-from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 
 from core.settings import settings
 from core.utils.logger import logger
 from shared.app.errors.authorization_token import InvalidApiKeyError
-from shared.app.errors.not_atorization import NotAuthorizedError
-from shared.presentation.schemas.envelope_response import DetailsSchema, ResponseSchema
 
 
 class AuthorizationMiddleware(BaseHTTPMiddleware):
