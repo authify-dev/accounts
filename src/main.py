@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
 from api.routers import api_healthcheck_router, api_v1_router
+from core.middlewares.authorization import AuthorizationMiddleware
 from core.middlewares.catcher import CatcherExceptionsMiddleware
 from core.middlewares.log_interceptor import LoggerMiddleware
 from core.middlewares.webhook import CallWebHookMiddleware
@@ -21,6 +22,7 @@ app = FastAPI(
 LoggerConfig.load_format()
 
 # Set all CORS enabled origins
+app.add_middleware(AuthorizationMiddleware)
 app.add_middleware(CatcherExceptionsMiddleware)
 app.add_middleware(LoggerMiddleware)
 app.add_middleware(CallWebHookMiddleware)
