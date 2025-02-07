@@ -9,6 +9,7 @@ class CreatePlatformStep(StepSAGA):
     def __init__(self, entity: PlatformEntity, repository: RepositoryInterface):
         self.entity = entity
         self.repository = repository
+        self.platform = None
 
     def __call__(self, payload: None = None, all_payloads: dict | None = None):
         user = all_payloads[CreateUserByUserNameStep]

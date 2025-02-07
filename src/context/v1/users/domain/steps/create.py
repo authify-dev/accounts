@@ -11,9 +11,9 @@ class CreateUserByUserNameStep(StepSAGA):
             user_name = f"User_{uuid4()}"
         self.user_name = user_name
         self.repository = repository
+        self.user = None
 
     def __call__(self, payload: None = None, all_payloads: dict | None = None):  # noqa: ARG002
-        self.user = None
         current_users_with_user_name = self.repository.get_by_attributes(filters={"user_name": self.user_name}, limit=1)
         if len(current_users_with_user_name) > 0:
             raise UserNameUniqueError(user_name=self.user_name)
