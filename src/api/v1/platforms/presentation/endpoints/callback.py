@@ -1,5 +1,5 @@
-import httpx
 from fastapi import Depends, status
+import requests
 from sqlalchemy.orm import Session
 
 from api.v1.platforms.presentation.endpoints.routers import router_operations as router
@@ -43,8 +43,7 @@ async def callback(
         "redirect_uri": settings.GOOGLE_OAUTH_REDIRECT_URI,
         "grant_type": "authorization_code",
     }
-    async with httpx.AsyncClient() as client:
-        token_response = await client.post(token_url, data=token_data, timeout=10)
+    token_response = await requests.post(token_url, data=token_data, timeout=10)
 
     if token_response.status_code != status.HTTP_200_OK:
         return {"error": "Failed to fetch token"}, 400
@@ -57,10 +56,10 @@ async def callback(
     # Obtener información del usuario
     user_info_url = "https://www.googleapis.com/oauth2/v1/userinfo"
 
-    async with httpx.AsyncClient() as client:
-        user_info_response = await client.get(
-            user_info_url, headers={"Authorization": f"Bearer {access_token}"}, timeout=10
-        )
+
+    user_info_response = await requests.get(
+        user_info_url, headers={"Authorization": f"Bearer {access_token}"}, timeout=10
+    )
 
 
     if user_info_response.status_code != status.HTTP_200_OK:
