@@ -13,8 +13,10 @@ class AuthorizationMiddleware(BaseHTTPMiddleware):
 
         logger.info("Check the API_KEY")
 
-        if api_key != settings.API_KEY:
-            logger.error("Invalid API_KEY")
-            raise InvalidApiKeyError
+        path = request.url.path
+        for resource in settings.RESOURCE_API:
+            if path.startswith(resource) and api_key != settings.API_KEY:
+                logger.error("Invalid API_KEY")
+                raise InvalidApiKeyError
 
         return await call_next(request)
