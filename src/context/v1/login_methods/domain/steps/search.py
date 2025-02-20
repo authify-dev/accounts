@@ -9,11 +9,11 @@ class SearchLoginMethodByPlatformStep(StepSAGA):
 
     def __call__(self, payload: None = None, all_payloads: dict | None = None):  # noqa: ARG002
 
-        login_method = self.repository.get_by_attributes(filters={"entity_id": payload.id})
+        login_method = self.repository.get_by_attributes(filters={"entity_id": str(payload.id)})
         if login_method is None:
             return []
 
-        return login_method
+        return login_method[0]
 
     def rollback(self):
         """
