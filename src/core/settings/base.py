@@ -132,3 +132,12 @@ class Settings(PydanticBaseSettings):
     DEFAULT_PAGE_SIZE: int = 30
     DEFAULT_ORDER_FIELD: str = "created"
     TIMESTAP: datetime = datetime.now().astimezone().strftime(format=DATE_TIME_FORMAT)
+
+
+    # Goolge Auth
+    # ----------------------------------------------------------------
+    GOOGLE_OAUTH_CLIENT_ID: str
+    GOOGLE_OAUTH_CLIENT_SECRET: str
+    GOOGLE_OAUTH_REDIRECT_URI: str
+    GOOGLE_OAUTH_SCOPES: str
+
