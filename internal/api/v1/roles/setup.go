@@ -23,11 +23,12 @@ func SetupRolesModule(app *fiber.App) {
 		},
 	)
 
-	usersController := controllers.NewRolesController(*rolesService)
+	rolesController := controllers.NewRolesController(*rolesService)
 
 	// Rutas de users
-	users := app.Group("/api/v1/roles")
+	roles := app.Group("/api/v1/roles")
 
-	users.Post("", usersController.SignUp)
+	roles.Post("", rolesController.SignUp)
+	roles.Get("", rolesController.List)
 
 }
