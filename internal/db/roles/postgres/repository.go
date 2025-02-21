@@ -33,7 +33,10 @@ func (u *RolePostgresRepository) List() ([]entities.Role, error) {
 		rolesEntities = append(rolesEntities, entities.Role{
 			Name:        role.Name,
 			Description: role.Description,
-			Entity:      base_entities.Entity{ID: role.ID},
+			Entity: base_entities.Entity{
+				ID:        role.ID,
+				CreatedAt: role.CreatedAt,
+			},
 		})
 	}
 	return rolesEntities, nil
