@@ -2,7 +2,9 @@ package main
 
 import (
 	"accounts/internal/core/settings"
-	"accounts/internal/db/users/postgres"
+	roles "accounts/internal/db/roles/postgres"
+	users "accounts/internal/db/users/postgres"
+
 	"fmt"
 
 	"gorm.io/driver/sqlite"
@@ -22,5 +24,7 @@ func main() {
 	}
 
 	// Migrate the schema
-	db.AutoMigrate(&postgres.UserModel{})
+	db.AutoMigrate(&users.UserModel{})
+	db.AutoMigrate(&roles.RoleModel{})
+
 }
