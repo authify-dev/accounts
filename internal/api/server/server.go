@@ -2,6 +2,7 @@ package server
 
 import (
 	"accounts/internal/api/health"
+	"accounts/internal/common/middlewares"
 	"accounts/internal/core/settings"
 	"fmt"
 
@@ -19,6 +20,10 @@ func Run() {
 func setUpRouter() *fiber.App {
 
 	app := fiber.New()
+
+	app.Use(middlewares.CatcherMiddleware)
+	app.Use(middlewares.TraceMiddleware)
+	app.Use(middlewares.LoggerMiddleware)
 
 	health.SetupHealthModule(app)
 	return app
