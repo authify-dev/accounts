@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"accounts/internal/api/v1/emails/interface/dtos"
 	"accounts/internal/api/v1/users/domain/entities"
+	"accounts/internal/common/requests"
 	"accounts/internal/common/responses"
 
 	"github.com/gofiber/fiber/v2"
@@ -9,8 +11,19 @@ import (
 
 func (c *EmailsController) SignUp(ctx *fiber.Ctx) error {
 
+	dto, err := requests.GetDTO[dtos.SignUpDTO](ctx)
+	if err != nil {
+		ctx.Locals("response", responses.Response{
+			Status: fiber.StatusConflict,
+			Errors: []string{err.Error()},
+		})
+		return nil
+	}
+
 	c.userService.Create(entities.User{
-		Name: "nombre",
+		Name:     dto.Name,
+		UserName: dto.UserName,
+		RoleID:   dto.Role,
 	})
 
 	customResponse := responses.Response{
