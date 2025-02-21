@@ -1,7 +1,8 @@
 package controllers
 
 import (
-	"accounts/internal/core/settings"
+	"accounts/internal/common/responses"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -18,13 +19,18 @@ func NewHealthController() *HealthController {
 // GetHealth
 func (c *HealthController) GetHealth(ctx *fiber.Ctx) error {
 
-	// Responder con un JSON que contiene la URL generada
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-		"success": true,
-		"data": fiber.Map{
+	customResponse := responses.Response{
+		Status: fiber.StatusOK,
+		Data: fiber.Map{
 			"status":    "ok",
-			"message":   "The service is online and functioning properly.",
-			"timestamp": settings.Settings.TIMESTAMP,
+			"message":   "El servicio está en línea y funcionando correctamente.",
+			"timestamp": time.Now().Unix(),
 		},
-	})
+		Metadata: nil,
+		Errors:   nil,
+	}
+
+	// Se almacena el objeto para que el middleware lo procese
+	ctx.Locals("response", customResponse)
+	return nil
 }
