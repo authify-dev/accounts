@@ -20,11 +20,14 @@ func (c *EmailsController) SignUp(ctx *fiber.Ctx) error {
 		return nil
 	}
 
-	c.userService.Create(entities.User{
-		Name:     dto.Name,
-		UserName: dto.UserName,
-		RoleID:   dto.Role,
-	})
+	c.userService.Create(
+		entities.User{
+			Name:     dto.Name,
+			UserName: dto.UserName,
+			RoleID:   dto.Role,
+		},
+		dto.Role,
+	)
 
 	customResponse := responses.Response{
 		Status: fiber.StatusOK,
