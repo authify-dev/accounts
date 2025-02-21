@@ -2,13 +2,28 @@ package emails
 
 import (
 	"accounts/internal/api/v1/emails/interface/controllers"
+	"accounts/internal/api/v1/users/domain/services"
+	"accounts/internal/db/users/postgres"
 
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 func SetupEmailsModule(app *fiber.App) {
 
-	usersController := controllers.NewEmailsController()
+	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
+	if err != nil {
+		panic("failed to connect database")
+	}
+
+	usersService := services.NewUsersService(
+		&postgres.UserPostgresRepository{
+			Conection: db,
+		},
+	)
+
+	usersController := controllers.NewEmailsController(*usersService)
 
 	// Rutas de users
 	users := app.Group("/api/v1/emails")
