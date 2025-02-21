@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"accounts/internal/common/logger"
 	"accounts/internal/common/responses"
 	"time"
 
@@ -19,6 +20,10 @@ func NewHealthController() *HealthController {
 // GetHealth
 func (c *HealthController) GetHealth(ctx *fiber.Ctx) error {
 
+	entry := logger.GetByContext(ctx)
+
+	entry.Info("HealthController.GetHealth")
+
 	customResponse := responses.Response{
 		Status: fiber.StatusOK,
 		Data: fiber.Map{
@@ -26,8 +31,11 @@ func (c *HealthController) GetHealth(ctx *fiber.Ctx) error {
 			"message":   "El servicio está en línea y funcionando correctamente.",
 			"timestamp": time.Now().Unix(),
 		},
-		Metadata: nil,
-		Errors:   nil,
+		Metadata: fiber.Map{
+			"trace_id":  "d316a340-9c0a-419c-ad25-b7fefcdda3ce",
+			"caller_id": "000000",
+		},
+		Errors: nil,
 	}
 
 	// Se almacena el objeto para que el middleware lo procese
