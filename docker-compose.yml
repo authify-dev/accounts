@@ -34,9 +34,9 @@ services:
     build:
       dockerfile: deployment/Dockerfile.deploy
     environment:
-      - ENVIRONMENT=docker
+      - ENVIRONMENT=development
     env_file:
-      - ./.envs/.env.docker
+      - ./.envs/.env.dev
     ports:
       - 9001:9000
     networks:
