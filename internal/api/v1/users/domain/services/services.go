@@ -1,13 +1,21 @@
 package services
 
-import "accounts/internal/db/users"
+import (
+	"accounts/internal/db/roles"
+	"accounts/internal/db/users"
+)
 
 type UsersService struct {
-	repository users.UserRepository
+	repository     users.UserRepository
+	roleRepository roles.RolesRepository
 }
 
-func NewUsersService(repository users.UserRepository) *UsersService {
+func NewUsersService(
+	repository users.UserRepository,
+	roleRepository roles.RolesRepository,
+) *UsersService {
 	return &UsersService{
-		repository: repository,
+		repository:     repository,
+		roleRepository: roleRepository,
 	}
 }

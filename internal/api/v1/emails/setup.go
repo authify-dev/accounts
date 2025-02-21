@@ -3,7 +3,9 @@ package emails
 import (
 	"accounts/internal/api/v1/emails/interface/controllers"
 	"accounts/internal/api/v1/users/domain/services"
-	"accounts/internal/db/users/postgres"
+
+	roles "accounts/internal/db/roles/postgres"
+	users "accounts/internal/db/users/postgres"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/driver/sqlite"
@@ -18,7 +20,10 @@ func SetupEmailsModule(app *fiber.App) {
 	}
 
 	usersService := services.NewUsersService(
-		&postgres.UserPostgresRepository{
+		&users.UserPostgresRepository{
+			Conection: db,
+		},
+		&roles.RolePostgresRepository{
 			Conection: db,
 		},
 	)
