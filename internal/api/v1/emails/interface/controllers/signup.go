@@ -1,12 +1,17 @@
 package controllers
 
 import (
+	"accounts/internal/api/v1/users/domain/entities"
 	"accounts/internal/common/responses"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func (c *EmailsController) SignUp(ctx *fiber.Ctx) error {
+
+	c.userService.Create(entities.User{
+		Name: "nombre",
+	})
 
 	customResponse := responses.Response{
 		Status: fiber.StatusOK,
