@@ -3,7 +3,7 @@ package roles
 import (
 	"accounts/internal/api/v1/roles/domain/services"
 	"accounts/internal/api/v1/roles/interface/controllers"
-	memory_role "accounts/internal/db/memory/role"
+	postgres_role "accounts/internal/db/postgres/role"
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
@@ -21,7 +21,7 @@ func SetupRolesModule(app *fiber.App) {
 	fmt.Println(db)
 
 	rolesService := services.NewRolesService(
-		&memory_role.RoleMemoryRepository{},
+		postgres_role.NewRolePostgresRepository(db),
 	)
 
 	rolesController := controllers.NewRolesController(*rolesService)
