@@ -3,7 +3,8 @@ package roles
 import (
 	"accounts/internal/api/v1/roles/domain/services"
 	"accounts/internal/api/v1/roles/interface/controllers"
-	role_repo "accounts/internal/db/roles/postgres"
+	memory_role "accounts/internal/db/memory/role"
+	"fmt"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/driver/sqlite"
@@ -17,10 +18,10 @@ func SetupRolesModule(app *fiber.App) {
 		panic("failed to connect database")
 	}
 
+	fmt.Println(db)
+
 	rolesService := services.NewRolesService(
-		&role_repo.RolePostgresRepository{
-			Conection: db,
-		},
+		&memory_role.RoleMemoryRepository{},
 	)
 
 	rolesController := controllers.NewRolesController(*rolesService)
