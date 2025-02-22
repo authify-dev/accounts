@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
 // --------------------------------
@@ -44,12 +43,10 @@ func UseCase(repo repositories.RoleRepository) {
 
 	result := domain.ModelToEntity[entities.Role, memory_role.RoleModel](memory_role.RoleModel{
 		Model: memory.Model[entities.Role]{
-			ID: uuid.New(),
-			Model: gorm.Model{
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
-				DeletedAt: gorm.DeletedAt{},
-			},
+			ID:        uuid.New(),
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+			IsRemoved: false,
 		},
 		Name:        "Admin",
 		Description: "Administrador",
@@ -79,7 +76,29 @@ func UseCase(repo repositories.RoleRepository) {
 // Controller
 // --------------------------------
 func main() {
-	repo := &memory_role.RoleMemoryRepository{}
-	UseCase(repo)
+	//repo := &memory_role.RoleMemoryRepository{}
+	//UseCase(repo)
+
+	entity := entities.Role{
+		Name:        "Admin",
+		Description: "Administrador",
+		Entity: domain.Entity{
+			ID:        uuid.New(),
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+			IsRemoved: false,
+		},
+	}
+
+	response := domain.EntityToModel[entities.Role, memory_role.RoleModel](entity)
+
+	if response.Err != nil {
+		fmt.Println("Error al convertir a modelo:", response.Err)
+		return
+	}
+
+	fmt.Println(entity)
+
+	fmt.Println(response.Data)
 
 }
