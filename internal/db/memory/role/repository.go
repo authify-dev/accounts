@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
 // --------------------------------
@@ -25,12 +24,10 @@ type RoleMemoryRepository struct {
 func (r *RoleMemoryRepository) Save(role entities.Role) error {
 	r.roles = append(r.roles, RoleModel{
 		Model: memory.Model[entities.Role]{
-			ID: uuid.New(),
-			Model: gorm.Model{
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
-				DeletedAt: gorm.DeletedAt{},
-			},
+			ID:        uuid.New(),
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+			IsRemoved: false,
 		},
 		Name:        role.Name,
 		Description: role.Description,
