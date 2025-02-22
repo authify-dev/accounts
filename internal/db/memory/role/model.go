@@ -20,6 +20,10 @@ type RoleModel struct {
 	Description string `gorm:"type:varchar(255);not null;" json:"description"`
 }
 
+func (RoleModel) TableName() string {
+	return "roles"
+}
+
 func (c RoleModel) GetID() uuid.UUID {
 	return c.ID
 }
