@@ -16,8 +16,8 @@ import (
 // RoleModel utiliza Model parametrizado con Role.
 type RoleModel struct {
 	memory.Model[entities.Role]
-	Name        string `gorm:"type:varchar(255);uniqueIndex;not null;"`
-	Description string `gorm:"type:varchar(255);not null;"`
+	Name        string `gorm:"type:varchar(255);uniqueIndex;not null;" json:"name"`
+	Description string `gorm:"type:varchar(255);not null;" json:"description"`
 }
 
 func (c RoleModel) GetID() uuid.UUID {
