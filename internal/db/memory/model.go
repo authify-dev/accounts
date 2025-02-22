@@ -3,9 +3,9 @@ package memory
 import (
 	"accounts/internal/core/domain"
 	"encoding/json"
+	"time"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
 // --------------------------------
@@ -16,8 +16,10 @@ import (
 
 // Model se restringe a tipos que cumplan con IEntity.
 type Model[E domain.IEntity] struct {
-	gorm.Model
-	ID uuid.UUID `gorm:"type:uuid;primary_key;"`
+	ID        uuid.UUID `gorm:"type:uuid;primary_key;" json:"id"`
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	IsRemoved bool      `json:"is_removed,omitempty"`
 }
 
 func (c *Model[E]) ToJSON() map[string]interface{} {
@@ -37,4 +39,8 @@ func (c *Model[E]) ToJSON() map[string]interface{} {
 	}
 
 	return result
+}
+
+func (c Model[E]) GetID() uuid.UUID {
+	return c.ID
 }
