@@ -2,6 +2,7 @@ package main
 
 import (
 	"accounts/internal/core/settings"
+	memory "accounts/internal/db/postgres/role"
 
 	"fmt"
 
@@ -22,5 +23,5 @@ func main() {
 	}
 
 	// Migrate the schema
-	fmt.Println(db)
+	db.AutoMigrate(&memory.RoleModel{})
 }
