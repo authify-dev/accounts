@@ -1,4 +1,4 @@
-package emails
+package postgres
 
 import (
 	"accounts/internal/api/v1/refresh_tokens/domain/entities"
