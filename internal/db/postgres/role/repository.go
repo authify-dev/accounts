@@ -5,9 +5,8 @@ import (
 	"accounts/internal/core/domain"
 	"accounts/internal/core/domain/criteria"
 	"accounts/internal/db/postgres"
-	"time"
+	"fmt"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -33,11 +32,6 @@ func (r *RolePostgresRepository) Save(role entities.Role) error {
 	}
 
 	roleModel := result.Data
-
-	roleModel.ID = uuid.New()
-	roleModel.CreatedAt = time.Now()
-	roleModel.UpdatedAt = time.Now()
-	roleModel.IsRemoved = false
 
 	if err := r.connection.Create(&roleModel).Error; err != nil {
 		return err
@@ -70,7 +64,34 @@ func (r *RolePostgresRepository) List() ([]entities.Role, error) {
 	return rolesEntities, nil
 }
 
-func (r *RolePostgresRepository) Matching(criteria criteria.Criteria) ([]entities.Role, error) {
+func (r *RolePostgresRepository) Matching(cr criteria.Criteria) ([]entities.Role, error) {
+	var roleModels []RoleModel
 
-	return r.List()
+	// Se inicia la consulta sobre el modelo RoleModel.
+	query := r.connection.Model(&RoleModel{})
+
+	// Se recorren los filtros para agregarlos a la consulta.
+	for _, f := range cr.Filters.Get() {
+		// Construir la condición de la consulta, por ejemplo: "name = ?"
+		condition := fmt.Sprintf("%s %s ?", f.Field, f.Operator)
+		query = query.Where(condition, f.Value)
+	}
+
+	// Ejecuta la consulta y almacena el resultado en roleModels.
+	err := query.Find(&roleModels).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// Convertir cada RoleModel obtenido a la entidad Role.
+	var roles []entities.Role
+	for _, rm := range roleModels {
+		result := domain.ModelToEntity[entities.Role, RoleModel](rm)
+		if result.Err != nil {
+			return nil, result.Err
+		}
+		roles = append(roles, result.Data)
+	}
+
+	return roles, nil
 }
