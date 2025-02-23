@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 // --------------------------------
@@ -19,9 +20,23 @@ type Model[E domain.IEntity] struct {
 	ID        uuid.UUID `gorm:"type:uuid;primary_key;" json:"id"`
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
-	IsRemoved bool      `gorm:"type:boolean" json:"is_removed,omitempty"`
+	IsRemoved bool      `gorm:"type:boolean;default:false" json:"is_removed,omitempty"`
 }
 
+// BeforeCreate se ejecuta antes de insertar el registro y establece CreatedAt y UpdatedAt en UTC.
+func (m *Model[E]) BeforeCreate(tx *gorm.DB) (err error) {
+	m.ID = uuid.New()
+	now := time.Now().UTC()
+	m.CreatedAt = now
+	m.UpdatedAt = now
+	return nil
+}
+
+// BeforeUpdate se ejecuta antes de actualizar el registro y establece UpdatedAt en UTC.
+func (m *Model[E]) BeforeUpdate(tx *gorm.DB) (err error) {
+	m.UpdatedAt = time.Now().UTC()
+	return nil
+}
 func (c *Model[E]) ToJSON() map[string]interface{} {
 	var result map[string]interface{}
 
