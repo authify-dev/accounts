@@ -16,11 +16,14 @@ import (
 
 type UserPostgresRepository struct {
 	postgres.PostgresRepository[entities.User, UserModel]
-	connection *gorm.DB
 }
 
 func NewUserPostgresRepository(connection *gorm.DB) *UserPostgresRepository {
-	return &UserPostgresRepository{connection: connection}
+	return &UserPostgresRepository{
+		PostgresRepository: postgres.PostgresRepository[entities.User, UserModel]{
+			Connection: connection,
+		},
+	}
 }
 
 func (r *UserPostgresRepository) Matching(criteria criteria.Criteria) ([]entities.User, error) {
