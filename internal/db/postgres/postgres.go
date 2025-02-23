@@ -43,7 +43,7 @@ func (r *PostgresRepository[E, M]) Save(role E) error {
 	return nil
 }
 
-func (r *PostgresRepository[E, M]) List() ([]E, error) {
+func (r *PostgresRepository[E, M]) SearchAll() ([]E, error) {
 
 	var roles []M
 

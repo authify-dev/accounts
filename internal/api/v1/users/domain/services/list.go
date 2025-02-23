@@ -5,5 +5,5 @@ import (
 )
 
 func (u *UsersService) List() ([]entities.User, error) {
-	return u.repository.List()
+	return u.repository.SearchAll()
 }

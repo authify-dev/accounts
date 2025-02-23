@@ -28,5 +28,5 @@ func NewUserPostgresRepository(connection *gorm.DB) *UserPostgresRepository {
 
 func (r *UserPostgresRepository) Matching(criteria criteria.Criteria) ([]entities.User, error) {
 
-	return r.List()
+	return r.SearchAll()
 }
