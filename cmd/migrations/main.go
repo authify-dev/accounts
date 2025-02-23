@@ -2,7 +2,8 @@ package main
 
 import (
 	"accounts/internal/core/settings"
-	memory "accounts/internal/db/postgres/role"
+	postgres_role "accounts/internal/db/postgres/role"
+	postgres_users "accounts/internal/db/postgres/users"
 
 	"fmt"
 
@@ -23,5 +24,7 @@ func main() {
 	}
 
 	// Migrate the schema
-	db.AutoMigrate(&memory.RoleModel{})
+	db.AutoMigrate(&postgres_role.RoleModel{})
+	db.AutoMigrate(&postgres_users.UserModel{})
+
 }
