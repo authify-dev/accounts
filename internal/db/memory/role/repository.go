@@ -3,6 +3,7 @@ package memory
 import (
 	"accounts/internal/api/v1/roles/domain/entities"
 	"accounts/internal/core/domain"
+	"accounts/internal/core/domain/criteria"
 	"accounts/internal/db/memory"
 	"fmt"
 	"time"
@@ -53,4 +54,9 @@ func (r *RoleMemoryRepository) List() ([]entities.Role, error) {
 	}
 
 	return rolesEntities, nil
+}
+
+func (r *RoleMemoryRepository) Matching(criteria criteria.Criteria) ([]entities.Role, error) {
+
+	return r.List()
 }
