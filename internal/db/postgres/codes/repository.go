@@ -17,7 +17,7 @@ import (
 // --------------------------------
 
 type CodePostgresRepository struct {
-	postgres.PostgresRepository[entities.Code]
+	postgres.PostgresRepository[entities.Code, CodeModel]
 	connection *gorm.DB
 }
 

@@ -17,58 +17,22 @@ import (
 // --------------------------------
 
 type RolePostgresRepository struct {
-	postgres.PostgresRepository[entities.Role]
-	connection *gorm.DB
+	postgres.PostgresRepository[entities.Role, RoleModel]
 }
 
 func NewRolePostgresRepository(connection *gorm.DB) *RolePostgresRepository {
-	return &RolePostgresRepository{connection: connection}
-}
-
-func (r *RolePostgresRepository) Save(role entities.Role) error {
-	result := domain.EntityToModel[entities.Role, RoleModel](role)
-	if result.Err != nil {
-		return result.Err
+	return &RolePostgresRepository{
+		PostgresRepository: postgres.PostgresRepository[entities.Role, RoleModel]{
+			Connection: connection,
+		},
 	}
-
-	roleModel := result.Data
-
-	if err := r.connection.Create(&roleModel).Error; err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (r *RolePostgresRepository) List() ([]entities.Role, error) {
-
-	var roles []RoleModel
-
-	if err := r.connection.Find(&roles).Error; err != nil {
-		return nil, err
-	}
-
-	var rolesEntities []entities.Role
-
-	for _, role := range roles {
-
-		result := domain.ModelToEntity[entities.Role, RoleModel](role)
-
-		if result.Err != nil {
-			return nil, result.Err
-		}
-
-		rolesEntities = append(rolesEntities, result.Data)
-	}
-
-	return rolesEntities, nil
 }
 
 func (r *RolePostgresRepository) Matching(cr criteria.Criteria) ([]entities.Role, error) {
 	var roleModels []RoleModel
 
-	// Se inicia la consulta sobre el modelo RoleModel.
-	query := r.connection.Model(&RoleModel{})
+	// Se inicia la consulta sobre el modelo model.
+	query := r.Connection.Model(&RoleModel{})
 
 	// Se recorren los filtros para agregarlos a la consulta.
 	for _, f := range cr.Filters.Get() {
@@ -83,7 +47,7 @@ func (r *RolePostgresRepository) Matching(cr criteria.Criteria) ([]entities.Role
 		return nil, err
 	}
 
-	// Convertir cada RoleModel obtenido a la entidad Role.
+	// Convertir cada model obtenido a la entidad Role.
 	var roles []entities.Role
 	for _, rm := range roleModels {
 		result := domain.ModelToEntity[entities.Role, RoleModel](rm)

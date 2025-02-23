@@ -16,7 +16,7 @@ import (
 // --------------------------------
 
 type UserPostgresRepository struct {
-	postgres.PostgresRepository[entities.User]
+	postgres.PostgresRepository[entities.User, UserModel]
 	connection *gorm.DB
 }
 

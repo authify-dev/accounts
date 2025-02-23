@@ -10,9 +10,6 @@ import (
 	"gorm.io/gorm"
 )
 
-type model RefreshTokenModel
-type entityType entities.RefreshToken
-
 // --------------------------------
 // INFRASTRUCTURE
 // --------------------------------
@@ -20,7 +17,7 @@ type entityType entities.RefreshToken
 // --------------------------------
 
 type LoginMethodPostgresRepository struct {
-	postgres.PostgresRepository[entityType]
+	postgres.PostgresRepository[entities.RefreshToken, RefreshTokenModel]
 	connection *gorm.DB
 }
 
@@ -28,8 +25,8 @@ func NewLoginMethodPostgresRepository(connection *gorm.DB) *LoginMethodPostgresR
 	return &LoginMethodPostgresRepository{connection: connection}
 }
 
-func (r *LoginMethodPostgresRepository) Save(entity entityType) error {
-	result := domain.EntityToModel[entityType, model](entity)
+func (r *LoginMethodPostgresRepository) Save(entity entities.RefreshToken) error {
+	result := domain.EntityToModel[entities.RefreshToken, RefreshTokenModel](entity)
 	if result.Err != nil {
 		return result.Err
 	}
@@ -43,19 +40,19 @@ func (r *LoginMethodPostgresRepository) Save(entity entityType) error {
 	return nil
 }
 
-func (r *LoginMethodPostgresRepository) List() ([]entityType, error) {
+func (r *LoginMethodPostgresRepository) List() ([]entities.RefreshToken, error) {
 
-	var records []model
+	var records []RefreshTokenModel
 
 	if err := r.connection.Find(&records).Error; err != nil {
 		return nil, err
 	}
 
-	var recordsEntities []entityType
+	var recordsEntities []entities.RefreshToken
 
 	for _, record := range records {
 
-		result := domain.ModelToEntity[entityType, model](record)
+		result := domain.ModelToEntity[entities.RefreshToken, RefreshTokenModel](record)
 
 		if result.Err != nil {
 			return nil, result.Err
@@ -67,11 +64,11 @@ func (r *LoginMethodPostgresRepository) List() ([]entityType, error) {
 	return recordsEntities, nil
 }
 
-func (r *LoginMethodPostgresRepository) Matching(cr criteria.Criteria) ([]entityType, error) {
-	var records []model
+func (r *LoginMethodPostgresRepository) Matching(cr criteria.Criteria) ([]entities.RefreshToken, error) {
+	var records []RefreshTokenModel
 
-	// Se inicia la consulta sobre el modelo model.
-	query := r.connection.Model(&model{})
+	// Se inicia la consulta sobre el RefreshTokenModelo RefreshTokenModel.
+	query := r.connection.Model(&RefreshTokenModel{})
 
 	// Se recorren los filtros para agregarlos a la consulta.
 	for _, f := range cr.Filters.Get() {
@@ -86,10 +83,10 @@ func (r *LoginMethodPostgresRepository) Matching(cr criteria.Criteria) ([]entity
 		return nil, err
 	}
 
-	// Convertir cada model obtenido a la entidad Role.
-	var recordsEntities []entityType
+	// Convertir cada RefreshTokenModel obtenido a la entidad Role.
+	var recordsEntities []entities.RefreshToken
 	for _, rm := range records {
-		result := domain.ModelToEntity[entityType, model](rm)
+		result := domain.ModelToEntity[entities.RefreshToken, RefreshTokenModel](rm)
 		if result.Err != nil {
 			return nil, result.Err
 		}
