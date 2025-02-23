@@ -13,7 +13,10 @@ import (
 
 type UserRepository interface {
 	Save(role entities.User) error
-	List() ([]entities.User, error)
-	View(data []entities.User)
+	Search(uuid string) (entities.User, error)
+	SearchAll() ([]entities.User, error)
+	Delete(uuid string) error
+	UpdateByFields(uuid string, fields map[string]interface{}) error
 	Matching(criteria criteria.Criteria) ([]entities.User, error)
+	View(data []entities.User)
 }
