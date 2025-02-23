@@ -29,7 +29,7 @@ type RefreshTokenModel struct {
 	// La etiqueta foreignKey indica cuál es el campo en este modelo que es llave foránea,
 	// y references indica a qué campo del modelo relacionado hace referencia.
 	UserModel        postgres_users.UserModel                `gorm:"foreignKey:UserID;references:ID" json:"user"`
-	LoginMethodModel postgres_login_methods.LoginMethodModel `gorm:"foreignKey:LoginMethodModel;references:ID" json:"login_method"`
+	LoginMethodModel postgres_login_methods.LoginMethodModel `gorm:"foreignKey:LoginMethodID;references:ID" json:"login_method"`
 }
 
 func (RefreshTokenModel) TableName() string {
