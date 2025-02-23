@@ -2,8 +2,13 @@ package main
 
 import (
 	"accounts/internal/core/settings"
-	postgres_role "accounts/internal/db/postgres/role"
-	postgres_users "accounts/internal/db/postgres/users"
+	codes "accounts/internal/db/postgres/codes"
+	emails "accounts/internal/db/postgres/emails"
+	login_methods "accounts/internal/db/postgres/login_methods"
+	oauth_logins "accounts/internal/db/postgres/oauth_logins"
+	refreshtokens "accounts/internal/db/postgres/refresh_tokens"
+	role "accounts/internal/db/postgres/role"
+	users "accounts/internal/db/postgres/users"
 
 	"fmt"
 
@@ -24,7 +29,12 @@ func main() {
 	}
 
 	// Migrate the schema
-	db.AutoMigrate(&postgres_role.RoleModel{})
-	db.AutoMigrate(&postgres_users.UserModel{})
+	db.AutoMigrate(&role.RoleModel{})
+	db.AutoMigrate(&users.UserModel{})
+	db.AutoMigrate(&emails.EmailModel{})
+	db.AutoMigrate(&codes.CodeModel{})
+	db.AutoMigrate(&oauth_logins.OAuthLoginModel{})
+	db.AutoMigrate(&login_methods.LoginMethodModel{})
+	db.AutoMigrate(&refreshtokens.RefreshTokenModel{})
 
 }
