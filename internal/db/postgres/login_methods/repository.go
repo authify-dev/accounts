@@ -25,45 +25,6 @@ func NewLoginMethodPostgresRepository(connection *gorm.DB) *LoginMethodPostgresR
 	return &LoginMethodPostgresRepository{connection: connection}
 }
 
-func (r *LoginMethodPostgresRepository) Save(entity entities.LoginMethod) error {
-	result := domain.EntityToModel[entities.LoginMethod, LoginMethodModel](entity)
-	if result.Err != nil {
-		return result.Err
-	}
-
-	entityModel := result.Data
-
-	if err := r.connection.Create(&entityModel).Error; err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (r *LoginMethodPostgresRepository) List() ([]entities.LoginMethod, error) {
-
-	var records []LoginMethodModel
-
-	if err := r.connection.Find(&records).Error; err != nil {
-		return nil, err
-	}
-
-	var recordsEntities []entities.LoginMethod
-
-	for _, record := range records {
-
-		result := domain.ModelToEntity[entities.LoginMethod, LoginMethodModel](record)
-
-		if result.Err != nil {
-			return nil, result.Err
-		}
-
-		recordsEntities = append(recordsEntities, result.Data)
-	}
-
-	return recordsEntities, nil
-}
-
 func (r *LoginMethodPostgresRepository) Matching(cr criteria.Criteria) ([]entities.LoginMethod, error) {
 	var records []LoginMethodModel
 

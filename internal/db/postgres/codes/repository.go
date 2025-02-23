@@ -25,45 +25,6 @@ func NewCodePostgresRepository(connection *gorm.DB) *CodePostgresRepository {
 	return &CodePostgresRepository{connection: connection}
 }
 
-func (r *CodePostgresRepository) Save(entity entities.Code) error {
-	result := domain.EntityToModel[entities.Code, CodeModel](entity)
-	if result.Err != nil {
-		return result.Err
-	}
-
-	entityModel := result.Data
-
-	if err := r.connection.Create(&entityModel).Error; err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (r *CodePostgresRepository) List() ([]entities.Code, error) {
-
-	var records []CodeModel
-
-	if err := r.connection.Find(&records).Error; err != nil {
-		return nil, err
-	}
-
-	var recordsEntities []entities.Code
-
-	for _, record := range records {
-
-		result := domain.ModelToEntity[entities.Code, CodeModel](record)
-
-		if result.Err != nil {
-			return nil, result.Err
-		}
-
-		recordsEntities = append(recordsEntities, result.Data)
-	}
-
-	return recordsEntities, nil
-}
-
 func (r *CodePostgresRepository) Matching(cr criteria.Criteria) ([]entities.Code, error) {
 	var records []CodeModel
 
