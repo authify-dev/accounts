@@ -14,16 +14,10 @@ type OAuthLoginModel struct {
 	postgres.Model[entities.OAuthLogin]
 
 	// UserID es el identificador del usuario asociado.
-	UserID uuid.UUID `gorm:"type:varchar(255);not null" json:"user_id,omitempty"`
+	UserID uuid.UUID `gorm:"type:uuid;not null" json:"user_id,omitempty"`
 
 	// ExternalID representa el identificador externo de la entidad.
 	ExternalID uuid.UUID `gorm:"type:varchar(255);uniqueIndex;not null" json:"entity_id,omitempty"`
-
-	// IsActive indica si el login OAuth se encuentra activo.
-	IsActive bool `gorm:"default:true" json:"is_active,omitempty"`
-
-	// IsVerify indica si el login OAuth ha sido verificado.
-	IsVerify bool `gorm:"default:false" json:"is_verify,omitempty"`
 
 	// Platform indica la plataforma del login OAuth (por ejemplo, Google, Facebook, etc.).
 	Platform string `gorm:"type:varchar(255);not null" json:"platform,omitempty"`
