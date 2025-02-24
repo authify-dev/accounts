@@ -3,19 +3,20 @@ package users
 import (
 	"accounts/internal/api/v1/users/domain/services"
 	"accounts/internal/api/v1/users/interface/controllers"
+	"accounts/internal/core/settings"
 	roles "accounts/internal/db/postgres/role"
 	users "accounts/internal/db/postgres/users"
 
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
-	"gorm.io/driver/sqlite"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 func SetupUsersModule(app *fiber.App) {
 
-	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(settings.Settings.POSTGRES_DSN), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
 	}
