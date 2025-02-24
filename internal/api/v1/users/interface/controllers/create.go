@@ -6,19 +6,13 @@ import (
 	"accounts/internal/common/requests"
 	"accounts/internal/common/responses"
 
+	"github.com/gin-gonic/gin"
 	"github.com/gofiber/fiber/v2"
 )
 
-func (c *UsersController) Create(ctx *fiber.Ctx) error {
+func (c *UsersController) Create(ctx *gin.Context) {
 
-	dto, err := requests.GetDTO[dtos.CreateUserDTO](ctx)
-	if err != nil {
-		ctx.Locals("response", responses.Response{
-			Status: fiber.StatusConflict,
-			Errors: []string{err.Error()},
-		})
-		return nil
-	}
+	dto := requests.GetDTO[dtos.CreateUserDTO](ctx)
 
 	c.userService.Create(entities.User{
 		Name:     dto.Name,
@@ -32,6 +26,5 @@ func (c *UsersController) Create(ctx *fiber.Ctx) error {
 	}
 
 	// Se almacena el objeto para que el middleware lo procese
-	ctx.Locals("response", customResponse)
-	return nil
+	ctx.JSON(fiber.StatusOK, customResponse)
 }

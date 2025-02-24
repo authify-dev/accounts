@@ -1,7 +1,7 @@
 package emails
 
 import (
-	"github.com/gofiber/fiber/v2"
+	"github.com/gin-gonic/gin"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
@@ -13,7 +13,7 @@ import (
 	users "accounts/internal/db/postgres/users"
 )
 
-func SetupEmailsModule(app *fiber.App) {
+func SetupEmailsModule(app *gin.Engine) {
 
 	db, err := gorm.Open(postgres.Open(settings.Settings.POSTGRES_DSN), &gorm.Config{})
 	if err != nil {
@@ -31,14 +31,14 @@ func SetupEmailsModule(app *fiber.App) {
 	// Rutas de users
 	group := app.Group("/api/v1/emails")
 
-	group.Post("/signup", controller.SignUp)
-	group.Post("/signup/resend-code", controller.SignUpResendCode)
+	group.POST("/signup", controller.SignUp)
+	group.POST("/signup/resend-code", controller.SignUpResendCode)
 
-	group.Post("/signin", controller.SignIn)
-	group.Post("/signin/resend-code", controller.SignInResendCode)
+	group.POST("/signin", controller.SignIn)
+	group.POST("/signin/resend-code", controller.SignInResendCode)
 
-	group.Post("/activate", controller.Activate)
+	group.POST("/activate", controller.Activate)
 
-	group.Post("/reset-password", controller.ResetPassword)
-	group.Post("/reset-password/resend-code", controller.ResetPasswordResendCode)
+	group.POST("/reset-password", controller.ResetPassword)
+	group.POST("/reset-password/resend-code", controller.ResetPasswordResendCode)
 }

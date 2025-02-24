@@ -4,12 +4,13 @@ import (
 	"accounts/internal/api/v1/roles/domain/entities"
 	"accounts/internal/api/v1/roles/domain/repositories"
 	"accounts/internal/core/domain"
-	"accounts/internal/db/memory"
-	memory_role "accounts/internal/db/memory/role"
-	"fmt"
+	"accounts/internal/core/domain/criteria"
+	postgres_role "accounts/internal/db/postgres/role"
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 // --------------------------------
@@ -41,33 +42,19 @@ func UseCase(repo repositories.RoleRepository) {
 		},
 	})
 
-	result := domain.ModelToEntity[entities.Role, memory_role.RoleModel](memory_role.RoleModel{
-		Model: memory.Model[entities.Role]{
-			ID:        uuid.New(),
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-			IsRemoved: false,
-		},
-		Name:        "Admin",
-		Description: "Administrador",
-	})
-
-	if result.Err != nil {
-		fmt.Println("Error al convertir a entidad:", result.Err)
-		return
+	cri := criteria.Criteria{
+		Filters: *criteria.NewFilters(
+			[]criteria.Filter{
+				{
+					Field:    "name",
+					Operator: criteria.OperatorEqual,
+					Value:    "user",
+				},
+			},
+		),
 	}
 
-	fmt.Println(result.Data)
-
-	roles, err := repo.List()
-	if err != nil {
-		fmt.Println("Error al listar roles:", err)
-		return
-	}
-
-	fmt.Println(len(roles))
-
-	repo.View(roles)
+	repo.Matching(cri)
 }
 
 // --------------------------------
@@ -76,29 +63,11 @@ func UseCase(repo repositories.RoleRepository) {
 // Controller
 // --------------------------------
 func main() {
-	//repo := &memory_role.RoleMemoryRepository{}
-	//UseCase(repo)
-
-	entity := entities.Role{
-		Name:        "Admin",
-		Description: "Administrador",
-		Entity: domain.Entity{
-			ID:        uuid.New(),
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-			IsRemoved: false,
-		},
+	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
+	if err != nil {
+		panic("failed to connect database")
 	}
-
-	response := domain.EntityToModel[entities.Role, memory_role.RoleModel](entity)
-
-	if response.Err != nil {
-		fmt.Println("Error al convertir a modelo:", response.Err)
-		return
-	}
-
-	fmt.Println(entity)
-
-	fmt.Println(response.Data)
+	repo := postgres_role.NewRolePostgresRepository(db)
+	UseCase(repo)
 
 }

@@ -7,12 +7,12 @@ import (
 	postgres_role "accounts/internal/db/postgres/role"
 	"fmt"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gin-gonic/gin"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-func SetupRolesModule(app *fiber.App) {
+func SetupRolesModule(app *gin.Engine) {
 
 	db, err := gorm.Open(postgres.Open(settings.Settings.POSTGRES_DSN), &gorm.Config{})
 	if err != nil {
@@ -30,7 +30,7 @@ func SetupRolesModule(app *fiber.App) {
 	// Rutas de users
 	roles := app.Group("/api/v1/roles")
 
-	roles.Post("", rolesController.SignUp)
-	roles.Get("", rolesController.List)
+	roles.POST("", rolesController.SignUp)
+	roles.GET("", rolesController.List)
 
 }

@@ -9,12 +9,12 @@ import (
 
 	"fmt"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gin-gonic/gin"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-func SetupUsersModule(app *fiber.App) {
+func SetupUsersModule(app *gin.Engine) {
 
 	db, err := gorm.Open(postgres.Open(settings.Settings.POSTGRES_DSN), &gorm.Config{})
 	if err != nil {
@@ -33,7 +33,7 @@ func SetupUsersModule(app *fiber.App) {
 	// Rutas de users
 	group := app.Group("/api/v1/users")
 
-	group.Post("", controller.Create)
-	group.Get("", controller.List)
+	group.POST("", controller.Create)
+	group.GET("", controller.List)
 
 }

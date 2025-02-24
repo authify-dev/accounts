@@ -3,18 +3,19 @@ package controllers
 import (
 	"accounts/internal/common/responses"
 
+	"github.com/gin-gonic/gin"
 	"github.com/gofiber/fiber/v2"
 )
 
-func (c *RolesController) List(ctx *fiber.Ctx) error {
+func (c *RolesController) List(ctx *gin.Context) {
 
 	roles, err := c.userService.List()
 	if err != nil {
-		ctx.Locals("response", responses.Response{
-			Status: fiber.StatusConflict,
+		ctx.JSON(fiber.StatusBadRequest, responses.Response{
+			Status: fiber.StatusBadRequest,
 			Errors: []string{err.Error()},
 		})
-		return nil
+		return
 	}
 
 	customResponse := responses.Response{
@@ -23,6 +24,5 @@ func (c *RolesController) List(ctx *fiber.Ctx) error {
 	}
 
 	// Se almacena el objeto para que el middleware lo procese
-	ctx.Locals("response", customResponse)
-	return nil
+	ctx.JSON(fiber.StatusOK, customResponse)
 }

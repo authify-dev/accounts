@@ -5,6 +5,7 @@ import (
 	"accounts/internal/common/responses"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -18,9 +19,9 @@ func NewHealthController() *HealthController {
 }
 
 // GetHealth
-func (c *HealthController) GetHealth(ctx *fiber.Ctx) error {
+func (c *HealthController) GetHealth(ctx *gin.Context) {
 
-	entry := logger.GetByContext(ctx)
+	entry := logger.FromContext(ctx)
 
 	entry.Info("HealthController.GetHealth")
 
@@ -39,6 +40,5 @@ func (c *HealthController) GetHealth(ctx *fiber.Ctx) error {
 	}
 
 	// Se almacena el objeto para que el middleware lo procese
-	ctx.Locals("response", customResponse)
-	return nil
+	ctx.JSON(fiber.StatusOK, customResponse)
 }

@@ -3,15 +3,15 @@ package health
 import (
 	"accounts/internal/api/health/interface/controllers"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gin-gonic/gin"
 )
 
-func SetupHealthModule(app *fiber.App) {
+func SetupHealthModule(app *gin.Engine) {
 
 	healthController := controllers.NewHealthController()
 
 	// Rutas de health
 	health := app.Group("/health")
 
-	health.Get("", healthController.GetHealth)
+	health.GET("", healthController.GetHealth)
 }

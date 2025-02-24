@@ -2,6 +2,7 @@ package server
 
 import (
 	"accounts/internal/api/health"
+	"accounts/internal/api/router"
 	"accounts/internal/api/v1/emails"
 	"accounts/internal/api/v1/roles"
 	"accounts/internal/api/v1/users"
@@ -10,6 +11,7 @@ import (
 	"accounts/internal/core/settings"
 	"fmt"
 
+	"github.com/gin-gonic/gin"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -19,16 +21,16 @@ func Run() {
 
 	app := setUpRouter()
 
-	app.Listen(fmt.Sprintf(":%d", settings.Settings.PORT))
+	app.Run(fmt.Sprintf(":%d", settings.Settings.PORT))
 }
 
-func setUpRouter() *fiber.App {
+func setUpRouter() *gin.Engine {
 
-	app := fiber.New()
+	app := router.NewRouter()
 
-	app.Use(middlewares.CatcherMiddleware)
-	app.Use(middlewares.TraceMiddleware)
-	app.Use(middlewares.LoggerMiddleware)
+	app.Use(middlewares.TraceMiddleware())
+	//app.Use(middlewares.CatcherMiddleware)
+	app.Use(middlewares.LoggerMiddleware())
 
 	health.SetupHealthModule(app)
 	roles.SetupRolesModule(app)
