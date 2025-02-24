@@ -4,21 +4,20 @@ import (
 	"accounts/internal/common/logger"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 // LoggerMiddleware contextualiza el logger para una API REST en Gin.
 func LoggerMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Generar un ID único para la petición.
-		requestID := uuid.New().String()
+		traceID := c.GetString("trace-id")
+		callerID := c.GetString("caller-id")
 
 		// Crear un logger contextualizado con información relevante.
 		reqLogger := logger.WithFields(map[string]interface{}{
-			"request_id": requestID,
-			"session_id": "sessionID",
-			"path":       c.Request.URL.Path,
-			"method":     c.Request.Method,
+			"trace_id":  traceID,
+			"caller_id": callerID,
+			"path":      c.Request.URL.Path,
+			"method":    c.Request.Method,
 		})
 
 		// Loguear el inicio de la petición.
