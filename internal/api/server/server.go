@@ -2,6 +2,7 @@ package server
 
 import (
 	"accounts/internal/api/health"
+	"accounts/internal/api/v1/emails"
 	"accounts/internal/api/v1/roles"
 	"accounts/internal/api/v1/users"
 
@@ -32,5 +33,6 @@ func setUpRouter() *fiber.App {
 	health.SetupHealthModule(app)
 	roles.SetupRolesModule(app)
 	users.SetupUsersModule(app)
+	emails.SetupEmailsModule(app)
 	return app
 }
