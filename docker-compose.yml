@@ -6,7 +6,7 @@ services:
       POSTGRES_PASSWORD: secret
       POSTGRES_DB: unicon
     ports:
-      - 5440:5432
+      - 5441:5432
     networks:
       - "local-development"
   db-mysql:
