@@ -12,20 +12,24 @@ import (
 
 	"fmt"
 
-	"gorm.io/driver/sqlite"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 func main() {
 	fmt.Println("accounts v0.0.1")
 
+	// Carga las variables de entorno
 	settings.LoadDotEnv()
-
 	settings.LoadEnvs()
 
-	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
+	// Define el DSN para la conexión a PostgreSQL
+	dsn := "postgres://postgres:secret@localhost:5441/unicon?sslmode=disable&TimeZone=UTC"
+
+	// Conecta a la base de datos Postgres
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		panic("failed to connect database")
+		panic("failed to connect database: " + err.Error())
 	}
 
 	// Migrate the schema
@@ -36,5 +40,4 @@ func main() {
 	db.AutoMigrate(&oauth_logins.OAuthLoginModel{})
 	db.AutoMigrate(&login_methods.LoginMethodModel{})
 	db.AutoMigrate(&refreshtokens.RefreshTokenModel{})
-
 }
