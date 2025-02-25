@@ -6,14 +6,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/mattn/go-colorable"
 	"github.com/sirupsen/logrus"
 )
 
-type contextKey string
-
-const loggerKey contextKey = "logger"
+const loggerKey = "logger"
 
 // CustomFormatter define un formateador personalizado para logrus con colores
 type CustomFormatter struct{}
@@ -80,11 +77,13 @@ func WithLogger(ctx context.Context, entry *logrus.Entry) context.Context {
 }
 
 // FromContext obtiene el logger contextualizado desde el contexto
-func FromContext(ctx *gin.Context) *logrus.Entry {
-	entry, ok := ctx.MustGet("logger").(*logrus.Entry)
+func FromContext(ctx context.Context) *logrus.Entry {
+	entry, ok := ctx.Value(loggerKey).(*logrus.Entry)
+
 	if ok {
 		return entry
 	}
+
 	// Si no hay logger contextualizado, devuelve el logger global
 	return globalLogger.WithFields(logrus.Fields{})
 }

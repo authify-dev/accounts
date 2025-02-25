@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"accounts/internal/common/logger"
+	"context"
 
 	"github.com/gin-gonic/gin"
 )
@@ -23,8 +24,9 @@ func LoggerMiddleware() gin.HandlerFunc {
 		// Loguear el inicio de la petición.
 		reqLogger.Info("Inicio de petición API REST")
 
-		// Agregar el logger contextualizado al contexto de Gin para uso posterior.
-		c.Set("logger", reqLogger)
+		// Agregar el logger al contexto de la request HTTP.
+		ctx := context.WithValue(c.Request.Context(), "logger", reqLogger)
+		c.Request = c.Request.WithContext(ctx)
 
 		// Continuar con el siguiente middleware o handler.
 		c.Next()
