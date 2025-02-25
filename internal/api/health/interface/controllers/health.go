@@ -21,7 +21,7 @@ func NewHealthController() *HealthController {
 // GetHealth
 func (c *HealthController) GetHealth(ctx *gin.Context) {
 
-	entry := logger.FromContext(ctx)
+	entry := logger.FromContext(ctx.Request.Context())
 
 	entry.Info("HealthController.GetHealth")
 
