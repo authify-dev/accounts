@@ -12,7 +12,8 @@ type Result[R any] struct {
 }
 
 type Responses[R any] struct {
-	Body       R     `json:"body,omitempty"`
-	Err        error `json:"error,omitempty"`
-	StatusCode int   `json:"status_code" default:"200"`
+	Body       R        `json:"body,omitempty"`
+	Err        error    `json:"error,omitempty"`
+	StatusCode int      `json:"status_code" default:"200"`
+	Errors     []string `json:"errors,omitempty"`
 }
