@@ -3,8 +3,10 @@ package postgres
 import (
 	"accounts/internal/core/domain"
 	"accounts/internal/core/domain/criteria"
+	"errors"
 	"fmt"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 )
 
@@ -37,6 +39,10 @@ func (r *PostgresRepository[E, M]) Save(role E) error {
 	roleModel := result.Data
 
 	if err := r.Connection.Create(&roleModel).Error; err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return fmt.Errorf("duplicate key error: a record with the same unique key (%s) already exists", pgErr.Detail)
+		}
 		return err
 	}
 
