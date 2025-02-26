@@ -3,6 +3,7 @@ package entities
 import "encoding/json"
 
 type SignUp struct {
+	UserName string `json:"user_name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 	Role     string `json:"role"`

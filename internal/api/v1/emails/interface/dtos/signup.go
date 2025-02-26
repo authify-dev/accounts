@@ -5,7 +5,7 @@ import (
 )
 
 type SignUpDTO struct {
-	UserName string `json:"username"`
+	UserName string `json:"user_name"`
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
 	Role     string `json:"role" binding:"required"`
