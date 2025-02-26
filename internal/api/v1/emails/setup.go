@@ -10,6 +10,7 @@ import (
 	"accounts/internal/core/settings"
 	emails "accounts/internal/db/postgres/emails"
 	login_methods "accounts/internal/db/postgres/login_methods"
+	roles "accounts/internal/db/postgres/role"
 	users "accounts/internal/db/postgres/users"
 )
 
@@ -23,6 +24,7 @@ func SetupEmailsModule(app *gin.Engine) {
 	service := services.NewEmailsService(
 		emails.NewEmailPostgresRepository(db),
 		users.NewUserPostgresRepository(db),
+		roles.NewRolePostgresRepository(db),
 		login_methods.NewLoginMethodPostgresRepository(db),
 	)
 
