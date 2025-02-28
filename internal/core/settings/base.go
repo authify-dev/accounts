@@ -17,6 +17,11 @@ type Config struct {
 	TIMESTAMP   string `required:"false"`
 
 	POSTGRES_DSN string `required:"true"`
+
+	PRIVATE_KEY_JWT string `required:"true"`
+	PUBLIC_KEY_JWT  string `required:"true"`
+	JWT_EXPIRE      int    `required:"false" default:"900"`
+	REFRESH_EXPIRE  int    `required:"false" default:"2592000"`
 }
 
 var Settings Config
