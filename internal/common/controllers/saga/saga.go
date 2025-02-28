@@ -15,6 +15,7 @@ type SAGA_Step[P any] interface {
 type SAGA_Controller struct {
 	Steps    []SAGA_Step[any]
 	Payloads map[string]utils.Result[any]
+	PrevSaga *SAGA_Controller
 }
 
 func (c *SAGA_Controller) Executed(ctx context.Context) map[string]utils.Result[any] {
@@ -40,6 +41,9 @@ func (c *SAGA_Controller) Executed(ctx context.Context) map[string]utils.Result[
 
 		if result.Err != nil {
 			c.Rollback(ctx)
+			if c.PrevSaga != nil {
+				c.PrevSaga.Rollback(ctx)
+			}
 			break
 		}
 	}
@@ -55,4 +59,23 @@ func (c SAGA_Controller) Rollback(ctx context.Context) error {
 		}
 	}
 	return nil
+}
+
+func (c SAGA_Controller) Ok() bool {
+	for _, p := range c.Payloads {
+		if p.Err != nil {
+			return false
+		}
+	}
+	return true
+}
+
+func (c SAGA_Controller) Errors() []string {
+	var errors []string
+	for _, p := range c.Payloads {
+		if p.Err != nil {
+			errors = append(errors, p.Err.Error())
+		}
+	}
+	return errors
 }
