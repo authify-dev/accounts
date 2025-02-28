@@ -8,6 +8,7 @@ import (
 	"accounts/internal/api/v1/emails/domain/services"
 	"accounts/internal/api/v1/emails/interface/controllers"
 	"accounts/internal/core/settings"
+	codes "accounts/internal/db/postgres/codes"
 	emails "accounts/internal/db/postgres/emails"
 	login_methods "accounts/internal/db/postgres/login_methods"
 	roles "accounts/internal/db/postgres/role"
@@ -26,6 +27,7 @@ func SetupEmailsModule(app *gin.Engine) {
 		users.NewUserPostgresRepository(db),
 		roles.NewRolePostgresRepository(db),
 		login_methods.NewLoginMethodPostgresRepository(db),
+		codes.NewCodePostgresRepository(db),
 	)
 
 	controller := controllers.NewEmailsController(*service)
