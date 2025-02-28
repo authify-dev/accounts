@@ -36,6 +36,9 @@ func (s *CreateUserStep) Call(ctx context.Context, payload utils.Result[any], al
 
 	entry := logger.FromContext(ctx)
 
+	id := uuid.New()
+	s.user.ID = id
+
 	// Verificar ID del role
 	criteria := criteria.Criteria{
 		Filters: *criteria.NewFilters(
