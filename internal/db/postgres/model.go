@@ -25,7 +25,6 @@ type Model[E domain.IEntity] struct {
 
 // BeforeCreate se ejecuta antes de insertar el registro y establece CreatedAt y UpdatedAt en UTC.
 func (m *Model[E]) BeforeCreate(tx *gorm.DB) (err error) {
-	m.ID = uuid.New()
 	now := time.Now().UTC()
 	m.CreatedAt = now
 	m.UpdatedAt = now
