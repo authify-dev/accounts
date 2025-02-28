@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 )
@@ -106,7 +107,7 @@ func (r *PostgresRepository[E, M]) MatchingLow(cr criteria.Criteria, model *M) (
 }
 
 // Delete elimina el registro que tenga el UUID especificado.
-func (r *PostgresRepository[E, M]) Delete(uuid string) error {
+func (r *PostgresRepository[E, M]) Delete(uuid uuid.UUID) error {
 	var model M
 	// GORM permite pasar el valor de la clave primaria para borrar.
 	if err := r.Connection.Delete(&model, uuid).Error; err != nil {
