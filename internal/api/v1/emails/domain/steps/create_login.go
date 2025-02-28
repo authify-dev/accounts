@@ -77,5 +77,5 @@ func (s *CreateLoginStep) Rollback(ctx context.Context) error {
 }
 
 func (s *CreateLoginStep) Produce() string {
-	return "entities.User"
+	return "entities.LoginMethod"
 }
