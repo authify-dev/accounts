@@ -87,7 +87,7 @@ func (s *CreateUserStep) Rollback(ctx context.Context) error {
 		return nil
 	}
 
-	if err := s.user_repo.Delete(s.user_id.String()); err != nil {
+	if err := s.user_repo.Delete(s.user_id); err != nil {
 		entry.Error("error deleting user")
 		return err
 	}
