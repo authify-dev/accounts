@@ -17,3 +17,21 @@ type Responses[R any] struct {
 	StatusCode int      `json:"status_code" default:"200"`
 	Errors     []string `json:"errors,omitempty"`
 }
+
+func (r Responses[R]) ToMap() map[string]interface{} {
+	responseMap := make(map[string]interface{})
+
+	if len(r.Errors) > 0 {
+		responseMap["errors"] = r.Errors
+		if r.Err != nil {
+			responseMap["error"] = r.Err.Error()
+		}
+	} else {
+		responseMap["body"] = r.Body
+		if r.Err != nil {
+			responseMap["error"] = r.Err.Error()
+		}
+	}
+
+	return responseMap
+}

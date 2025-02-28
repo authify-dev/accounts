@@ -28,9 +28,8 @@ func (c *EmailsController) SignUp(ctx *gin.Context) {
 	}
 
 	response := c.userService.SignUp(ctx.Request.Context(), entity)
-
 	// Se almacena el objeto para que el middleware lo procese
-	ctx.JSON(response.StatusCode, response)
+	ctx.JSON(response.StatusCode, response.ToMap())
 }
 
 func (c *EmailsController) SignUpResendCode(ctx *gin.Context) {
