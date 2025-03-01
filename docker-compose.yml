@@ -46,5 +46,15 @@ services:
         limits:
           cpus: "2"
           memory: "512m"
+
+  queue:
+    image: rabbitmq:3-management
+    ports:
+      - "5673:5672" # Puerto para aplicaciones
+      - "15673:15672" # Puerto para la interfaz de administración
+    environment:
+      RABBITMQ_DEFAULT_USER: admin # Usuario por defecto
+      RABBITMQ_DEFAULT_PASS: password # Contraseña por defecto
+
 networks:
   local-development:
