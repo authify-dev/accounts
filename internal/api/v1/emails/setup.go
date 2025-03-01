@@ -7,7 +7,7 @@ import (
 
 	"accounts/internal/api/v1/emails/domain/services"
 	"accounts/internal/api/v1/emails/interface/controllers"
-	jwt_controller "accounts/internal/common/controllers"
+	utils_controller "accounts/internal/common/controllers"
 	"accounts/internal/core/settings"
 	codes "accounts/internal/db/postgres/codes"
 	emails "accounts/internal/db/postgres/emails"
@@ -31,10 +31,11 @@ func SetupEmailsModule(app *gin.Engine) {
 		login_methods.NewLoginMethodPostgresRepository(db),
 		codes.NewCodePostgresRepository(db),
 		refresh.NewRefreshTokenPostgresRepository(db),
-		jwt_controller.JWTController{
+		utils_controller.JWTController{
 			PublicKey:  settings.Settings.PUBLIC_KEY_JWT,
 			PrivateKey: settings.Settings.PRIVATE_KEY_JWT,
 		},
+		utils_controller.NewPasswordController(settings.Settings.SECRET_PASSWORD),
 	)
 
 	controller := controllers.NewEmailsController(*service)
