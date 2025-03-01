@@ -22,6 +22,7 @@ type Config struct {
 	PUBLIC_KEY_JWT  string `required:"true"`
 	JWT_EXPIRE      int    `required:"false" default:"900"`
 	REFRESH_EXPIRE  int    `required:"false" default:"2592000"`
+	SECRET_PASSWORD string `required:"true"`
 }
 
 var Settings Config
