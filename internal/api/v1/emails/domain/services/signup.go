@@ -5,9 +5,11 @@ import (
 	"accounts/internal/api/v1/emails/domain/steps"
 	logins "accounts/internal/api/v1/login_methods/domain/entities"
 	refreshs "accounts/internal/api/v1/refresh_tokens/domain/entities"
+	"log"
 
 	users "accounts/internal/api/v1/users/domain/entities"
 
+	"accounts/internal/common/controllers/queue"
 	"accounts/internal/common/controllers/saga"
 	"accounts/internal/utils"
 	"context"
@@ -23,6 +25,11 @@ func (s *EmailsService) SignUp(
 		Role:     entity.Role,
 	}
 
+	password_hashed, err := s.password_controller.HashPassword(entity.Password)
+	if err != nil {
+		return utils.Responses[entities.SignUpResponse]{Errors: []string{err.Error()}, StatusCode: 500}
+	}
+
 	// Crear usuario y email
 	controller := saga.SAGA_Controller{
 		Steps: []saga.SAGA_Step[any]{
@@ -36,7 +43,7 @@ func (s *EmailsService) SignUp(
 				s.repository,
 				entities.Email{
 					Email:    entity.Email,
-					Password: entity.Password,
+					Password: password_hashed,
 				},
 			),
 		},
@@ -97,6 +104,18 @@ func (s *EmailsService) SignUp(
 		if result.Err != nil {
 			response.Errors = append(response.Errors, result.Err.Error())
 		}
+	}
+
+	qc := queue.NewQueueController()
+
+	data := map[string]interface{}{
+		"email": email,
+		"user":  user,
+	}
+
+	// Agregar el mensaje a la cola "new-users"
+	if err := qc.PublishToExchange("users_registered", data); err != nil {
+		log.Fatalf("Error al publicar el mensaje: %v", err)
 	}
 
 	return response
