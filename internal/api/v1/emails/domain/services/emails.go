@@ -18,6 +18,7 @@ type EmailsService struct {
 	codes_repository         codes.CodeRepository
 	refresh_repository       refresh.RefreshTokenRepository
 	jwt_controller           controllers.JWTController
+	password_controller      controllers.PasswordController
 }
 
 func NewEmailsService(
@@ -28,6 +29,7 @@ func NewEmailsService(
 	codes_repository codes.CodeRepository,
 	refresh_repository refresh.RefreshTokenRepository,
 	jwt_contrller controllers.JWTController,
+	password_controller controllers.PasswordController,
 ) *EmailsService {
 	return &EmailsService{
 		repository:               repository,
@@ -37,5 +39,6 @@ func NewEmailsService(
 		codes_repository:         codes_repository,
 		refresh_repository:       refresh_repository,
 		jwt_controller:           jwt_contrller,
+		password_controller:      password_controller,
 	}
 }
