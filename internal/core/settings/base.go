@@ -16,13 +16,29 @@ type Config struct {
 	PORT        int    `required:"false" default:"8000"`
 	TIMESTAMP   string `required:"false"`
 
+	// Database
 	POSTGRES_DSN string `required:"true"`
 
+	// JWT
 	PRIVATE_KEY_JWT string `required:"true"`
 	PUBLIC_KEY_JWT  string `required:"true"`
 	JWT_EXPIRE      int    `required:"false" default:"900"`
 	REFRESH_EXPIRE  int    `required:"false" default:"2592000"`
+
+	// Password
 	SECRET_PASSWORD string `required:"true"`
+
+	// Event Bus
+	USER_EVENT_BUS     string `required:"true"`
+	PASSWORD_EVENT_BUS string `required:"true"`
+	HOST_EVENT_BUS     string `required:"true"`
+	PORT_EVENT_BUS     int    `required:"true"`
+	VHOST_EVENT_BUS    string `required:"true"`
+
+	// Email
+	EMAIL_SENDER          string `required:"true"`
+	EMAIL_SENDER_PASSWORD string `required:"true"`
+	EMAIL_CLIENT          string `required:"true"`
 }
 
 var Settings Config
