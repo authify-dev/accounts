@@ -3,9 +3,9 @@ package email_events
 import "github.com/google/uuid"
 
 type UserRegistered struct {
-	Email            string
-	CodeVerification string
-	UserName         string
+	Email            string `json:"email"`
+	CodeVerification string `json:"code"`
+	UserName         string `json:"user"`
 }
 
 func (u UserRegistered) ToPrimitive() map[string]interface{} {
