@@ -1,6 +1,11 @@
 package rabbit
 
-import "accounts/internal/core/domain/event"
+import (
+	"accounts/internal/core/domain/event"
+	"accounts/internal/utils"
+
+	"github.com/rabbitmq/amqp091-go"
+)
 
 type RabbitEventBus struct {
 	connection *RabbitMqConnection
@@ -35,4 +40,14 @@ func (r *RabbitEventBus) Publish(events []event.DomainEvent) error {
 		}
 	}
 	return nil
+}
+
+func (r *RabbitEventBus) Consume() utils.Result[<-chan amqp091.Delivery] {
+	return r.connection.Consume(
+		"domain_events",
+		event.OptionsQueue{
+			Name: "user_events",
+			Key:  "user.registered",
+		},
+	)
 }
