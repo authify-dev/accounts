@@ -8,6 +8,8 @@ import (
 	"accounts/internal/api/v1/emails/domain/services"
 	"accounts/internal/api/v1/emails/interface/controllers"
 	utils_controller "accounts/internal/common/controllers"
+	"accounts/internal/core/domain/event"
+	"accounts/internal/core/infrastructure/event_bus/rabbit"
 	"accounts/internal/core/settings"
 	codes "accounts/internal/db/postgres/codes"
 	emails "accounts/internal/db/postgres/emails"
@@ -36,6 +38,7 @@ func SetupEmailsModule(app *gin.Engine) {
 			PrivateKey: settings.Settings.PRIVATE_KEY_JWT,
 		},
 		utils_controller.NewPasswordController(settings.Settings.SECRET_PASSWORD),
+		eventBus(),
 	)
 
 	controller := controllers.NewEmailsController(*service)
@@ -53,4 +56,30 @@ func SetupEmailsModule(app *gin.Engine) {
 
 	group.POST("/reset-password", controller.ResetPassword)
 	group.POST("/reset-password/resend-code", controller.ResetPasswordResendCode)
+}
+
+func eventBus() event.EventBus {
+
+	connection := rabbit.NewRabbitMqConnection(
+		event.SettingsEventBus{
+			Username: settings.Settings.USER_EVENT_BUS,
+			Password: settings.Settings.PASSWORD_EVENT_BUS,
+			VHost:    settings.Settings.VHOST_EVENT_BUS,
+			Connection: struct {
+				Hostname string
+				Port     int
+			}{
+				Hostname: settings.Settings.HOST_EVENT_BUS,
+				Port:     settings.Settings.PORT_EVENT_BUS,
+			},
+		},
+	)
+
+	connection.Connect()
+
+	event_bus := rabbit.NewRabbitEventBus(
+		connection,
+	)
+
+	return event_bus
 }
