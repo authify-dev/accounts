@@ -1,15 +1,18 @@
 package services
 
 import (
+	codes "accounts/internal/api/v1/codes/domain/entities"
 	"accounts/internal/api/v1/emails/domain/entities"
+	email_events "accounts/internal/api/v1/emails/domain/events"
 	"accounts/internal/api/v1/emails/domain/steps"
 	logins "accounts/internal/api/v1/login_methods/domain/entities"
 	refreshs "accounts/internal/api/v1/refresh_tokens/domain/entities"
+
+	"accounts/internal/core/domain/event"
 	"log"
 
 	users "accounts/internal/api/v1/users/domain/entities"
 
-	"accounts/internal/common/controllers/queue"
 	"accounts/internal/common/controllers/saga"
 	"accounts/internal/utils"
 	"context"
@@ -106,16 +109,19 @@ func (s *EmailsService) SignUp(
 		}
 	}
 
-	qc := queue.NewQueueController()
+	code := results_login["entities.Code"].Data.(codes.Code)
 
-	data := map[string]interface{}{
-		"email": email,
-		"user":  user,
+	user_event := email_events.UserRegistered{
+		Email:            email.Email,
+		CodeVerification: code.Code,
+		UserName:         user.UserName,
 	}
 
 	// Agregar el mensaje a la cola "new-users"
-	if err := qc.PublishToExchange("users_registered", data); err != nil {
-		log.Fatalf("Error al publicar el mensaje: %v", err)
+	if err := s.event_bus.Publish([]event.DomainEvent{
+		user_event,
+	}); err != nil {
+		log.Println("Error al publicar el evento new-users")
 	}
 
 	return response
