@@ -8,6 +8,7 @@ import (
 	roles "accounts/internal/api/v1/roles/domain/repositories"
 	users "accounts/internal/api/v1/users/domain/repositories"
 	"accounts/internal/common/controllers"
+	"accounts/internal/core/domain/event"
 )
 
 type EmailsService struct {
@@ -19,6 +20,7 @@ type EmailsService struct {
 	refresh_repository       refresh.RefreshTokenRepository
 	jwt_controller           controllers.JWTController
 	password_controller      controllers.PasswordController
+	event_bus                event.EventBus
 }
 
 func NewEmailsService(
@@ -30,6 +32,7 @@ func NewEmailsService(
 	refresh_repository refresh.RefreshTokenRepository,
 	jwt_contrller controllers.JWTController,
 	password_controller controllers.PasswordController,
+	event_bus event.EventBus,
 ) *EmailsService {
 	return &EmailsService{
 		repository:               repository,
@@ -40,5 +43,6 @@ func NewEmailsService(
 		refresh_repository:       refresh_repository,
 		jwt_controller:           jwt_contrller,
 		password_controller:      password_controller,
+		event_bus:                event_bus,
 	}
 }
