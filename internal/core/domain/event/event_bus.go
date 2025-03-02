@@ -3,10 +3,13 @@ package event
 import (
 	"accounts/internal/utils"
 	"encoding/json"
+
+	"github.com/rabbitmq/amqp091-go"
 )
 
 type EventBus interface {
 	Publish(events []DomainEvent) error
+	Consume() utils.Result[<-chan amqp091.Delivery]
 }
 
 type SettingsEventBus struct {
@@ -33,4 +36,9 @@ func ToBytes(data map[string]interface{}) utils.Result[[]byte] {
 		return utils.Result[[]byte]{Err: err}
 	}
 	return utils.Result[[]byte]{Data: body}
+}
+
+type OptionsQueue struct {
+	Name string
+	Key  string
 }
