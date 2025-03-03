@@ -101,7 +101,7 @@ func LoadEnvs() {
 		for i := 0; i < v.NumField(); i++ {
 			fieldName := t.Field(i).Name
 			fieldValue := v.Field(i).Interface()
-			log.Printf("  %s: %v", fieldName, fieldValue)
+			fmt.Printf("\033[32m%s\033[0m: %v\n", fieldName, fieldValue)
 		}
 	}
 }
