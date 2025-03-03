@@ -11,6 +11,11 @@ type Result[R any] struct {
 	Err  error
 }
 
+type Either[R any] struct {
+	Data R
+	Err  error
+}
+
 type Responses[R any] struct {
 	Body       R        `json:"body,omitempty"`
 	Err        error    `json:"error,omitempty"`
