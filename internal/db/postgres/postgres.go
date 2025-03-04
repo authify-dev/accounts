@@ -78,7 +78,7 @@ func (r *PostgresRepository[E, M]) MatchingLow(cr criteria.Criteria, model *M) (
 	var roleModels []M
 
 	// Se inicia la consulta sobre el modelo model.
-	query := r.Connection.Model(model)
+	query := r.Connection.Debug().Model(model)
 
 	// Se recorren los filtros para agregarlos a la consulta.
 	for _, f := range cr.Filters.Get() {
@@ -92,6 +92,11 @@ func (r *PostgresRepository[E, M]) MatchingLow(cr criteria.Criteria, model *M) (
 	if err != nil {
 		return nil, err
 	}
+
+	sql := query.ToSQL(func(tx *gorm.DB) *gorm.DB {
+		return tx
+	})
+	fmt.Println(sql)
 
 	// Convertir cada model obtenido a la entidad Role.
 	var roles []E
