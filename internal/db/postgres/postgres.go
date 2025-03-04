@@ -115,8 +115,9 @@ func (r *PostgresRepository[E, M]) MatchingLow(cr criteria.Criteria, model *M) (
 // Delete elimina el registro que tenga el UUID especificado.
 func (r *PostgresRepository[E, M]) Delete(id string) error {
 	var model M
-	// GORM permite pasar el valor de la clave primaria para borrar.
-	if err := r.Connection.Delete(&model, id).Error; err != nil {
+
+	// Borra el registro asegurándote de pasar el ID como string en la consulta
+	if err := r.Connection.Delete(&model, "id = ?", id).Error; err != nil {
 		return err
 	}
 	return nil
