@@ -23,9 +23,10 @@ type RoleMemoryRepository struct {
 }
 
 func (r *RoleMemoryRepository) Save(role entities.Role) error {
+	id := fmt.Sprintf("%s_%s", "rol", uuid.New().String())
 	r.roles = append(r.roles, RoleModel{
 		Model: memory.Model[entities.Role]{
-			ID:        uuid.New(),
+			ID:        id,
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 			IsRemoved: false,

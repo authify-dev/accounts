@@ -3,8 +3,6 @@ package domain
 import (
 	"accounts/internal/utils"
 	"encoding/json"
-
-	"github.com/google/uuid"
 )
 
 // --------------------------------
@@ -14,7 +12,7 @@ import (
 // --------------------------------
 // Definimos una interfaz que represente a una entidad.
 type IModel interface {
-	GetID() uuid.UUID
+	GetID() string
 }
 
 func ModelToEntity[E IEntity, M IModel](model IModel) utils.Result[E] {

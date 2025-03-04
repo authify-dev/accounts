@@ -3,8 +3,6 @@ package domain
 import (
 	"encoding/json"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 // --------------------------------
@@ -15,13 +13,13 @@ import (
 
 // Entity ahora implementa IEntity.
 type Entity struct {
-	ID        uuid.UUID `json:"id"`
+	ID        string    `json:"id"`
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	IsRemoved bool      `json:"is_removed,omitempty"`
 }
 
-func (e Entity) GetID() uuid.UUID {
+func (e Entity) GetID() string {
 	return e.ID
 }
 

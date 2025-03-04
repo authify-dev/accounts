@@ -4,8 +4,10 @@ import (
 	"accounts/internal/api/v1/oauth_logins/domain/entities"
 	"accounts/internal/db/postgres"
 	postgres_users "accounts/internal/db/postgres/users"
+	"fmt"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 // OAuthLoginModel representa el modelo de datos para la entidad OAuthLogin.
@@ -14,10 +16,10 @@ type OAuthLoginModel struct {
 	postgres.Model[entities.OAuthLogin]
 
 	// UserID es el identificador del usuario asociado.
-	UserID uuid.UUID `gorm:"type:uuid;not null" json:"user_id,omitempty"`
+	UserID string `gorm:"type:varchar(50);not null" json:"user_id,omitempty"`
 
 	// ExternalID representa el identificador externo de la entidad.
-	ExternalID uuid.UUID `gorm:"type:varchar(255);uniqueIndex;not null" json:"entity_id,omitempty"`
+	ExternalID string `gorm:"type:varchar(255);uniqueIndex;not null" json:"entity_id,omitempty"`
 
 	// Platform indica la plataforma del login OAuth (por ejemplo, Google, Facebook, etc.).
 	Platform string `gorm:"type:varchar(255);not null" json:"platform,omitempty"`
@@ -31,6 +33,11 @@ func (OAuthLoginModel) TableName() string {
 }
 
 // GetID retorna el identificador único del modelo.
-func (o OAuthLoginModel) GetID() uuid.UUID {
+func (o OAuthLoginModel) GetID() string {
 	return o.ID
+}
+
+func (m *OAuthLoginModel) BeforeCreate(tx *gorm.DB) (err error) {
+	m.ID = fmt.Sprintf("%s_%s", m.TableName()[:3], uuid.New().String())
+	return m.Model.BeforeCreate(tx)
 }

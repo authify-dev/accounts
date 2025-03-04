@@ -3,8 +3,7 @@ package repositories
 import (
 	"accounts/internal/api/v1/emails/domain/entities"
 	"accounts/internal/core/domain/criteria"
-
-	"github.com/google/uuid"
+	"accounts/internal/utils"
 )
 
 // --------------------------------
@@ -14,10 +13,10 @@ import (
 // --------------------------------
 
 type EmailRepository interface {
-	Save(role entities.Email) error
+	Save(role entities.Email) utils.Either[string]
 	Search(uuid string) (entities.Email, error)
 	SearchAll() ([]entities.Email, error)
-	Delete(uuid uuid.UUID) error
+	Delete(uuid string) error
 	UpdateByFields(uuid string, fields map[string]interface{}) error
 	Matching(criteria criteria.Criteria) ([]entities.Email, error)
 	View(data []entities.Email)

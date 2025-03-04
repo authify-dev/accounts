@@ -10,19 +10,17 @@ import (
 	"accounts/internal/common/logger"
 	"accounts/internal/utils"
 	"context"
-
-	"github.com/google/uuid"
 )
 
 type CreateCodeStep struct {
-	code_id    uuid.UUID
-	user_id    uuid.UUID
+	code_id    string
+	user_id    string
 	codes_repo codes.CodeRepository
 }
 
 func NewCreateCodeStep(
 	codes_repo codes.CodeRepository,
-	user_id uuid.UUID,
+	user_id string,
 ) *CreateCodeStep {
 	return &CreateCodeStep{
 		codes_repo: codes_repo,
@@ -34,23 +32,19 @@ func (s *CreateCodeStep) Call(ctx context.Context, payload utils.Result[any], al
 
 	entry := logger.FromContext(ctx)
 
-	id := uuid.New()
-
 	code_entity := codes_entities.Code{
-		UserID: s.user_id.String(),
-		Entity: domain.Entity{
-			ID: id,
-		},
-		Code: generateCode(6),
+		UserID: s.user_id,
+		Entity: domain.Entity{},
+		Code:   generateCode(6),
 	}
 
-	err := s.codes_repo.Save(code_entity)
-	if err != nil {
+	result := s.codes_repo.Save(code_entity)
+	if result.Err != nil {
 		entry.Error("error saving the code")
-		return utils.Result[any]{Err: err}
+		return utils.Result[any]{Err: result.Err}
 	}
 
-	s.code_id = id
+	s.code_id = result.Data
 
 	return utils.Result[any]{
 		Data: code_entity,
@@ -61,7 +55,7 @@ func (s *CreateCodeStep) Rollback(ctx context.Context) error {
 	entry := logger.FromContext(ctx)
 
 	// Implementación de la lógica de negocio
-	if s.code_id == uuid.Nil {
+	if s.code_id == "" {
 		entry.Error("code_id is empty")
 		return nil
 	}

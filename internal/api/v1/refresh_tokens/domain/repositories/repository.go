@@ -3,8 +3,7 @@ package repositories
 import (
 	"accounts/internal/api/v1/refresh_tokens/domain/entities"
 	"accounts/internal/core/domain/criteria"
-
-	"github.com/google/uuid"
+	"accounts/internal/utils"
 )
 
 // --------------------------------
@@ -14,10 +13,10 @@ import (
 // --------------------------------
 
 type RefreshTokenRepository interface {
-	Save(role entities.RefreshToken) error
+	Save(role entities.RefreshToken) utils.Either[string]
 	Search(uuid string) (entities.RefreshToken, error)
 	SearchAll() ([]entities.RefreshToken, error)
-	Delete(uuid uuid.UUID) error
+	Delete(uuid string) error
 	UpdateByFields(uuid string, fields map[string]interface{}) error
 	Matching(criteria criteria.Criteria) ([]entities.RefreshToken, error)
 	View(data []entities.RefreshToken)

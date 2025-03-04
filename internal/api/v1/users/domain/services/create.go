@@ -31,7 +31,7 @@ func (u *UsersService) Create(user entities.User) error {
 
 	role := roles[0]
 
-	user.RoleID = role.GetID().String()
+	user.RoleID = role.GetID()
 
-	return u.repository.Save(user)
+	return u.repository.Save(user).Err
 }

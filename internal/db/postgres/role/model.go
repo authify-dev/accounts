@@ -3,8 +3,10 @@ package postgres
 import (
 	"accounts/internal/api/v1/roles/domain/entities"
 	"accounts/internal/db/postgres"
+	"fmt"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 // --------------------------------
@@ -24,6 +26,11 @@ func (RoleModel) TableName() string {
 	return "roles"
 }
 
-func (c RoleModel) GetID() uuid.UUID {
+func (c RoleModel) GetID() string {
 	return c.ID
+}
+
+func (m *RoleModel) BeforeCreate(tx *gorm.DB) (err error) {
+	m.ID = fmt.Sprintf("%s_%s", m.TableName()[:3], uuid.New().String())
+	return m.Model.BeforeCreate(tx)
 }

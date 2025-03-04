@@ -5,9 +5,11 @@ import (
 	"accounts/internal/db/postgres"
 	postgres_login_methods "accounts/internal/db/postgres/login_methods"
 	postgres_users "accounts/internal/db/postgres/users"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 // --------------------------------
@@ -19,9 +21,9 @@ import (
 // RefreshTokenModel utiliza Model parametrizado con User.
 type RefreshTokenModel struct {
 	postgres.Model[entities.RefreshToken]
-	UserID        uuid.UUID `gorm:"type:uuid;not null" json:"user_id"`
-	LoginMethodID uuid.UUID `gorm:"type:uuid;not null" json:"login_method_id,omitempty"`
-	ExternalID    uuid.UUID `gorm:"type:uuid;not null" json:"external_id,omitempty"`
+	UserID        string `gorm:"type:varchar(50);not null" json:"user_id"`
+	LoginMethodID string `gorm:"type:varchar(50);not null" json:"login_method_id,omitempty"`
+	ExternalID    string `gorm:"type:varchar(50);not null" json:"external_id,omitempty"`
 
 	ExpiresAt time.Time `json:"expires_at,omitempty"`
 	RemoveAt  time.Time `json:"remove_at,omitempty"`
@@ -36,6 +38,11 @@ func (RefreshTokenModel) TableName() string {
 	return "refresh_tokens"
 }
 
-func (c RefreshTokenModel) GetID() uuid.UUID {
+func (c RefreshTokenModel) GetID() string {
 	return c.ID
+}
+
+func (m *RefreshTokenModel) BeforeCreate(tx *gorm.DB) (err error) {
+	m.ID = fmt.Sprintf("%s_%s", m.TableName()[:3], uuid.New().String())
+	return m.Model.BeforeCreate(tx)
 }

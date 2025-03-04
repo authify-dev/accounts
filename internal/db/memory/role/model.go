@@ -3,8 +3,6 @@ package memory
 import (
 	"accounts/internal/api/v1/roles/domain/entities"
 	"accounts/internal/db/memory"
-
-	"github.com/google/uuid"
 )
 
 // --------------------------------
@@ -24,6 +22,6 @@ func (RoleModel) TableName() string {
 	return "roles"
 }
 
-func (c RoleModel) GetID() uuid.UUID {
+func (c RoleModel) GetID() string {
 	return c.ID
 }

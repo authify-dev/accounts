@@ -9,12 +9,10 @@ import (
 	"accounts/internal/utils"
 	"context"
 	"errors"
-
-	"github.com/google/uuid"
 )
 
 type CreateUserStep struct {
-	user_id   uuid.UUID
+	user_id   string
 	user_repo users.UserRepository
 	role_repo roles.RoleRepository
 	user      entities.User
@@ -35,9 +33,6 @@ func NewCreateUserStep(
 func (s *CreateUserStep) Call(ctx context.Context, payload utils.Result[any], allPayloads map[string]utils.Result[any]) utils.Result[any] {
 
 	entry := logger.FromContext(ctx)
-
-	id := uuid.New()
-	s.user.ID = id
 
 	// Verificar ID del role
 	criteria := criteria.Criteria{
@@ -66,15 +61,18 @@ func (s *CreateUserStep) Call(ctx context.Context, payload utils.Result[any], al
 	role_id := roles[0].ID
 
 	// Crear usuario
-	s.user.RoleID = role_id.String()
+	s.user.RoleID = role_id
 
-	err = s.user_repo.Save(s.user)
-	if err != nil {
+	result := s.user_repo.Save(s.user)
+
+	s.user.ID = result.Data
+
+	if result.Err != nil {
 		entry.Error("error saving user")
 		return utils.Result[any]{Err: err}
 	}
 
-	s.user_id = s.user.ID
+	s.user_id = result.Data
 
 	return utils.Result[any]{
 		Data: s.user,
@@ -85,7 +83,7 @@ func (s *CreateUserStep) Rollback(ctx context.Context) error {
 	entry := logger.FromContext(ctx)
 
 	// Implementación de la lógica de negocio
-	if s.user_id == uuid.Nil {
+	if s.user_id == "" {
 		entry.Error("user_id is empty")
 		return nil
 	}

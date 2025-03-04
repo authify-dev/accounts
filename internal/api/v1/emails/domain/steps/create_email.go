@@ -11,12 +11,10 @@ import (
 	"accounts/internal/utils"
 	"context"
 	"errors"
-
-	"github.com/google/uuid"
 )
 
 type CreateEmailStep struct {
-	email_id    uuid.UUID
+	email_id    string
 	user_repo   users.UserRepository
 	emails_repo emails.EmailRepository
 	email       entities.Email
@@ -39,8 +37,6 @@ func (s *CreateEmailStep) Call(ctx context.Context, payload utils.Result[any], a
 	entry := logger.FromContext(ctx)
 
 	user := payload.Data.(users_entities.User)
-
-	s.email.ID = uuid.New()
 
 	// Verificar ID del role
 	criteria := criteria.Criteria{
@@ -66,15 +62,15 @@ func (s *CreateEmailStep) Call(ctx context.Context, payload utils.Result[any], a
 		return utils.Result[any]{Err: errors.New("user already exists with this email")}
 	}
 
-	s.email.UserID = user.ID.String()
+	s.email.UserID = user.ID
 
-	err = s.emails_repo.Save(s.email)
-	if err != nil {
+	result := s.emails_repo.Save(s.email)
+	if result.Err != nil {
 		entry.Error("error saving user")
-		return utils.Result[any]{Err: err}
+		return utils.Result[any]{Err: result.Err}
 	}
 
-	s.email_id = s.email.ID
+	s.email_id = result.Data
 
 	return utils.Result[any]{
 		Data: s.email,
@@ -85,7 +81,7 @@ func (s *CreateEmailStep) Rollback(ctx context.Context) error {
 	entry := logger.FromContext(ctx)
 
 	// Implementación de la lógica de negocio
-	if s.email_id == uuid.Nil {
+	if s.email_id == "" {
 		entry.Error("email_id is empty")
 		return nil
 	}

@@ -15,14 +15,14 @@ import (
 )
 
 type CreateRefreshTokenStep struct {
-	refresh_token_id uuid.UUID
-	user_id          uuid.UUID
+	refresh_token_id string
+	user_id          string
 	refresh_repo     refresh.RefreshTokenRepository
 }
 
 func NewCreateRefreshTokenStep(
 	refresh_repo refresh.RefreshTokenRepository,
-	user_id uuid.UUID,
+	user_id string,
 ) *CreateRefreshTokenStep {
 	return &CreateRefreshTokenStep{
 		refresh_repo: refresh_repo,
@@ -36,25 +36,22 @@ func (s *CreateRefreshTokenStep) Call(ctx context.Context, payload utils.Result[
 
 	login := payload.Data.(logins_entities.LoginMethod)
 
-	id := uuid.New()
 	external_id := uuid.New()
 
 	entity := refresh_tokens_entities.RefreshToken{
-		UserID: s.user_id.String(),
-		Entity: domain.Entity{
-			ID: id,
-		},
-		LoginMethodID: login.ID.String(),
+		UserID:        s.user_id,
+		Entity:        domain.Entity{},
+		LoginMethodID: login.ID,
 		ExternalID:    external_id.String(),
 	}
 
-	err := s.refresh_repo.Save(entity)
-	if err != nil {
+	result := s.refresh_repo.Save(entity)
+	if result.Err != nil {
 		entry.Error("error saving the code")
-		return utils.Result[any]{Err: err}
+		return utils.Result[any]{Err: result.Err}
 	}
 
-	s.refresh_token_id = id
+	s.refresh_token_id = result.Data
 
 	return utils.Result[any]{
 		Data: entity,
@@ -65,7 +62,7 @@ func (s *CreateRefreshTokenStep) Rollback(ctx context.Context) error {
 	entry := logger.FromContext(ctx)
 
 	// Implementación de la lógica de negocio
-	if s.refresh_token_id == uuid.Nil {
+	if s.refresh_token_id == "" {
 		entry.Error("refresh_token_id is empty")
 		return nil
 	}

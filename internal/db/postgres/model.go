@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -17,7 +16,7 @@ import (
 
 // Model se restringe a tipos que cumplan con IEntity.
 type Model[E domain.IEntity] struct {
-	ID        uuid.UUID `gorm:"type:uuid;primary_key;" json:"id"`
+	ID        string    `gorm:"type:varchar(50);primary_key;" json:"id"`
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	IsRemoved bool      `gorm:"type:boolean;default:false" json:"is_removed,omitempty"`
@@ -55,6 +54,10 @@ func (c *Model[E]) ToJSON() map[string]interface{} {
 	return result
 }
 
-func (c Model[E]) GetID() uuid.UUID {
+func (c Model[E]) GetID() string {
 	return c.ID
+}
+
+func (c Model[E]) TableName() string {
+	return "model"
 }

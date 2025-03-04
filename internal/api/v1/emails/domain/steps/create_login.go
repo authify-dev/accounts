@@ -8,21 +8,19 @@ import (
 	"accounts/internal/common/logger"
 	"accounts/internal/utils"
 	"context"
-
-	"github.com/google/uuid"
 )
 
 type CreateLoginStep struct {
-	login_id    uuid.UUID
-	user_id     uuid.UUID
-	entity_id   uuid.UUID
+	login_id    string
+	user_id     string
+	entity_id   string
 	logins_repo logins.LoginMethodRepository
 }
 
 func NewCreateLoginStep(
 	logins_repo logins.LoginMethodRepository,
-	user_id uuid.UUID,
-	entity_id uuid.UUID,
+	user_id string,
+	entity_id string,
 ) *CreateLoginStep {
 	return &CreateLoginStep{
 		logins_repo: logins_repo,
@@ -35,23 +33,20 @@ func (s *CreateLoginStep) Call(ctx context.Context, payload utils.Result[any], a
 
 	entry := logger.FromContext(ctx)
 
-	id := uuid.New()
-
 	login := logins_entities.LoginMethod{
-		UserID: s.user_id.String(),
-		Entity: domain.Entity{
-			ID: id,
-		},
-		EntityID: s.entity_id.String(),
+		UserID:   s.user_id,
+		Entity:   domain.Entity{},
+		EntityID: s.entity_id,
 	}
 
-	err := s.logins_repo.Save(login)
-	if err != nil {
+	result := s.logins_repo.Save(login)
+	if result.Err != nil {
 		entry.Error("error saving login")
-		return utils.Result[any]{Err: err}
+		return utils.Result[any]{Err: result.Err}
 	}
 
-	s.login_id = id
+	s.login_id = result.Data
+	login.ID = result.Data
 
 	return utils.Result[any]{
 		Data: login,
@@ -62,7 +57,7 @@ func (s *CreateLoginStep) Rollback(ctx context.Context) error {
 	entry := logger.FromContext(ctx)
 
 	// Implementación de la lógica de negocio
-	if s.login_id == uuid.Nil {
+	if s.login_id == "" {
 		entry.Error("login_id is empty")
 		return nil
 	}

@@ -3,10 +3,10 @@ package postgres
 import (
 	"accounts/internal/core/domain"
 	"accounts/internal/core/domain/criteria"
+	"accounts/internal/utils"
 	"errors"
 	"fmt"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 )
@@ -31,10 +31,10 @@ func (m *PostgresRepository[E, M]) View(data []E) {
 
 }
 
-func (r *PostgresRepository[E, M]) Save(role E) error {
+func (r *PostgresRepository[E, M]) Save(role E) utils.Either[string] {
 	result := domain.EntityToModel[E, M](role)
 	if result.Err != nil {
-		return result.Err
+		return utils.Either[string]{Err: result.Err}
 	}
 
 	roleModel := result.Data
@@ -42,12 +42,13 @@ func (r *PostgresRepository[E, M]) Save(role E) error {
 	if err := r.Connection.Create(&roleModel).Error; err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-			return fmt.Errorf("duplicate key error: a record with the same unique key (%s) already exists", pgErr.Detail)
+			err = fmt.Errorf("duplicate key error: a record with the same unique key (%s) already exists", pgErr.Detail)
+			return utils.Either[string]{Err: err}
 		}
-		return err
+		return utils.Either[string]{Err: err}
 	}
 
-	return nil
+	return utils.Either[string]{Data: roleModel.GetID()}
 }
 
 func (r *PostgresRepository[E, M]) SearchAll() ([]E, error) {
@@ -112,10 +113,10 @@ func (r *PostgresRepository[E, M]) MatchingLow(cr criteria.Criteria, model *M) (
 }
 
 // Delete elimina el registro que tenga el UUID especificado.
-func (r *PostgresRepository[E, M]) Delete(uuid uuid.UUID) error {
+func (r *PostgresRepository[E, M]) Delete(id string) error {
 	var model M
 	// GORM permite pasar el valor de la clave primaria para borrar.
-	if err := r.Connection.Delete(&model, uuid).Error; err != nil {
+	if err := r.Connection.Delete(&model, id).Error; err != nil {
 		return err
 	}
 	return nil

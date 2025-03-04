@@ -4,8 +4,10 @@ import (
 	"accounts/internal/api/v1/oauth_logins/domain/entities"
 	"accounts/internal/db/postgres"
 	postgres_users "accounts/internal/db/postgres/users"
+	"fmt"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 // EmailModel representa el modelo de datos para la entidad OAuthLogin.
@@ -14,7 +16,7 @@ type EmailModel struct {
 	postgres.Model[entities.OAuthLogin]
 
 	// UserID es el identificador del usuario asociado.
-	UserID uuid.UUID `gorm:"type:uuid;not null" json:"user_id,omitempty"`
+	UserID string `gorm:"type:varchar(50);not null" json:"user_id,omitempty"`
 
 	// ExternalID representa el identificador externo de la entidad.
 	Email string `gorm:"type:varchar(255);uniqueIndex;not null" json:"email,omitempty"`
@@ -32,6 +34,11 @@ func (EmailModel) TableName() string {
 }
 
 // GetID retorna el identificador único del modelo.
-func (o EmailModel) GetID() uuid.UUID {
+func (o EmailModel) GetID() string {
 	return o.ID
+}
+
+func (m *EmailModel) BeforeCreate(tx *gorm.DB) (err error) {
+	m.ID = fmt.Sprintf("%s_%s", m.TableName()[:3], uuid.New().String())
+	return m.Model.BeforeCreate(tx)
 }

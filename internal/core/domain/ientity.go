@@ -4,8 +4,6 @@ import (
 	"accounts/internal/utils"
 	"encoding/json"
 	"fmt"
-
-	"github.com/google/uuid"
 )
 
 // --------------------------------
@@ -16,7 +14,7 @@ import (
 
 // Definimos una interfaz que represente a una entidad.
 type IEntity interface {
-	GetID() uuid.UUID
+	GetID() string
 }
 
 func ToJSON[E IEntity](entity E) []byte {
