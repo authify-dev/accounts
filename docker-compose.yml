@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   db:
     image: postgres:15
@@ -9,52 +11,45 @@ services:
       - 5441:5432
     networks:
       - "local-development"
-  db-mysql:
-      image: mysql:8
-      environment:
-        MYSQL_ROOT_PASSWORD: secret
-        MYSQL_DATABASE: jalo
-      ports:
-        - 3306:3306
-      networks:
-        - "local-development"
-  tests:
-    build:
-      dockerfile: deployment/Dockerfile.test
-    env_file:
-      - ./.envs/.env.base
-      - ./.envs/.env.test
-    ports:
-      - 9001:9000
-    networks:
-      - "local-development"
-    depends_on:
-      - db
-  app:
-    build:
-      dockerfile: deployment/Dockerfile.deploy
-    environment:
-      - ENVIRONMENT=development
-    env_file:
-      - ./.envs/.env.dev
-    ports:
-      - 9001:9000
-    networks:
-      - "local-development"
-    deploy:
-      resources:
-        limits:
-          cpus: "2"
-          memory: "512m"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   queue:
     image: rabbitmq:3-management
     ports:
-      - "5673:5672" # Puerto para aplicaciones
-      - "15673:15672" # Puerto para la interfaz de administración
+      - "5673:5672"
+      - "15673:15672"
     environment:
-      RABBITMQ_DEFAULT_USER: admin # Usuario por defecto
-      RABBITMQ_DEFAULT_PASS: password # Contraseña por defecto
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: password
+    networks:
+      - "local-development"
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q check_running"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  app:
+    depends_on:
+      db:
+        condition: service_healthy
+      queue:
+        condition: service_healthy
+    build:
+      dockerfile: deployment/Dockerfile.deploy
+    environment:
+      - ENVIRONMENT=docker
+    env_file:
+      - ./.envs/.env.docker
+    ports:
+      - 9001:8000
+    networks:
+      - "local-development"
 
 networks:
   local-development:
+

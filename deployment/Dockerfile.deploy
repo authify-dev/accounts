@@ -1,25 +1,36 @@
-FROM python:3.13-alpine
+# Etapa 1: Compilación
+FROM golang:1.23.4-alpine AS builder
 
-ENV PYTHONUNBUFFERED=1
-ENV ROOT_PATH=""
-RUN apk update && apk add --no-cache \
-    gcc \
-    musl-dev \
-    libpq-dev \
-    postgresql-dev \
-    && pip install --upgrade pip \
-    && pip install -U poetry \
-    && pip install gunicorn uvicorn[standard]
+# Variables de entorno para Go
+ENV CGO_ENABLED=0 \
+    GOOS=linux \
+    GOARCH=amd64
 
-WORKDIR /application/src
+WORKDIR /app
 
-# Copiar archivos de configuración de Poetry
-COPY pyproject.toml poetry.lock* ./
+# Instala dependencias necesarias
+RUN apk add --no-cache git
 
-# Instalar dependencias de Poetry
-RUN poetry install --no-root --only main
+# Copia los archivos del proyecto
+COPY go.mod go.sum ./
+RUN go mod download
 
-COPY ./src /application/src
-EXPOSE 9000
-CMD ["poetry", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "9000", "--workers", "2"]
+COPY . .
+
+# Compila el binario de la aplicación
+RUN go build -o /app/main ./cmd/api/main.go
+
+# Etapa 2: Ejecución
+FROM alpine:latest
+
+WORKDIR /root/
+
+# Copia el binario desde la etapa de compilación
+COPY --from=builder /app/main .
+
+# Especifica el puerto en el que escucha la app (si es necesario)
+EXPOSE 8000
+
+# Ejecuta la aplicación
+CMD ["./main"]
 
