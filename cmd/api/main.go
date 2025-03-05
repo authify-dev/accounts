@@ -1,6 +1,7 @@
 package main
 
 import (
+	"accounts/cmd/queue"
 	"accounts/internal/api/server"
 	"accounts/internal/core/settings"
 	"fmt"
@@ -12,6 +13,8 @@ func main() {
 	settings.LoadDotEnv()
 
 	settings.LoadEnvs()
+
+	go queue.InitQueue()
 
 	server.Run()
 }

@@ -1,4 +1,4 @@
-package main
+package queue
 
 import (
 	email_events "accounts/internal/api/v1/emails/domain/events"
@@ -38,12 +38,12 @@ func eventBus() event.EventBus {
 	return event_bus
 }
 
-func main() {
-	fmt.Println("accounts v0.0.1")
+func InitQueue() {
+	fmt.Println("queue accounts v0.0.1")
 
-	settings.LoadDotEnv()
-
-	settings.LoadEnvs()
+	//settings.LoadDotEnv()
+	//
+	//settings.LoadEnvs()
 
 	controlador := controllers.NewEmailController(
 
