@@ -33,11 +33,22 @@ func (c *EmailsController) SignUp(ctx *gin.Context) {
 }
 
 func (c *EmailsController) SignUpResendCode(ctx *gin.Context) {
-	customResponse := responses.Response{
-		Status: fiber.StatusOK,
-		Data:   "SignUpResendCode",
+	dto := requests.GetDTO[dtos.ResendActivationCodeDTO](ctx)
+
+	entity, err := entities.NewResendActivationCodeFromJSON(dto.ToJson())
+
+	if err != nil {
+		customResponse := responses.Response{
+			Status: fiber.StatusBadRequest,
+			Data:   "Error al parsear el JSON",
+		}
+
+		// Se almacena el objeto para que el middleware lo procese
+		ctx.JSON(fiber.StatusOK, customResponse)
+		return
 	}
 
+	response := c.userService.ResendActivationCode(ctx.Request.Context(), entity)
 	// Se almacena el objeto para que el middleware lo procese
-	ctx.JSON(fiber.StatusOK, customResponse)
+	ctx.JSON(response.StatusCode, response.ToMap())
 }
