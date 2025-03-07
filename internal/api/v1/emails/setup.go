@@ -79,6 +79,7 @@ func eventBus() event.EventBus {
 
 	event_bus := rabbit.NewRabbitEventBus(
 		connection,
+		"domain_events",
 	)
 
 	return event_bus
