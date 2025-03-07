@@ -124,10 +124,10 @@ func (r *PostgresRepository[E, M]) Delete(id string) error {
 }
 
 // Search busca y retorna la entidad asociada al UUID especificado.
-func (r *PostgresRepository[E, M]) Search(uuid string) (E, error) {
+func (r *PostgresRepository[E, M]) Search(id string) (E, error) {
 	var model M
 	// Se utiliza First para obtener el primer registro que coincida con el UUID.
-	if err := r.Connection.First(&model, uuid).Error; err != nil {
+	if err := r.Connection.First(&model, "id = ?", id).Error; err != nil {
 		var empty E
 		return empty, err
 	}
