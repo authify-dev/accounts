@@ -3,9 +3,11 @@ package queue
 import (
 	email_events "accounts/internal/api/v1/emails/domain/events"
 	"accounts/internal/common/controllers"
+	"accounts/internal/common/logger"
 	"accounts/internal/core/domain/event"
 	"accounts/internal/core/infrastructure/event_bus/rabbit"
 	"accounts/internal/core/settings"
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -33,6 +35,7 @@ func eventBus() event.EventBus {
 
 	event_bus := rabbit.NewRabbitEventBus(
 		connection,
+		"domain_events",
 	)
 
 	return event_bus
@@ -55,11 +58,13 @@ func InitQueue() {
 
 	eventBus := eventBus()
 
-	response := eventBus.Consume()
+	response := eventBus.Consume("user_events", "user.registered")
 
 	if response.Err != nil {
 		fmt.Println(response.Err)
 	}
+
+	entry := logger.FromContext(context.Background())
 
 	go func() {
 		for msg := range response.Data {
@@ -68,15 +73,16 @@ func InitQueue() {
 
 			err := json.Unmarshal(msg.Body, &data)
 			if err != nil {
-				fmt.Println(err)
+				entry.Errorln(err)
 			}
 
-			fmt.Println("User Name: ", data.UserName)
-			fmt.Println("Email: ", data.Email)
-			fmt.Println("Code: ", data.CodeVerification)
+			entry.Info("User Name: ", data.UserName)
+			entry.Info("Email: ", data.Email)
+			entry.Info("Code: ", data.CodeVerification)
 
 			controlador.SendEmail(data.Email, "Código de verificación", "Código de verificación: "+data.CodeVerification)
 
+			entry.Info("Email sent")
 		}
 	}()
 
