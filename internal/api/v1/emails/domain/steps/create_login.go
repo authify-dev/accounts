@@ -14,6 +14,7 @@ type CreateLoginStep struct {
 	login_id    string
 	user_id     string
 	entity_id   string
+	entity_type string
 	logins_repo logins.LoginMethodRepository
 }
 
@@ -21,11 +22,13 @@ func NewCreateLoginStep(
 	logins_repo logins.LoginMethodRepository,
 	user_id string,
 	entity_id string,
+	entity_type string,
 ) *CreateLoginStep {
 	return &CreateLoginStep{
 		logins_repo: logins_repo,
 		user_id:     user_id,
 		entity_id:   entity_id,
+		entity_type: entity_type,
 	}
 }
 
@@ -34,9 +37,10 @@ func (s *CreateLoginStep) Call(ctx context.Context, payload utils.Result[any], a
 	entry := logger.FromContext(ctx)
 
 	login := logins_entities.LoginMethod{
-		UserID:   s.user_id,
-		Entity:   domain.Entity{},
-		EntityID: s.entity_id,
+		UserID:     s.user_id,
+		Entity:     domain.Entity{},
+		EntityID:   s.entity_id,
+		EntityType: s.entity_type,
 	}
 
 	result := s.logins_repo.Save(login)
