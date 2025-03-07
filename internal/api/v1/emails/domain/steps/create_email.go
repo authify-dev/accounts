@@ -71,6 +71,7 @@ func (s *CreateEmailStep) Call(ctx context.Context, payload utils.Result[any], a
 	}
 
 	s.email_id = result.Data
+	s.email.ID = result.Data
 
 	return utils.Result[any]{
 		Data: s.email,
