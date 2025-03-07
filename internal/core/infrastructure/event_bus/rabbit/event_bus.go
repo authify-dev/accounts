@@ -8,12 +8,14 @@ import (
 )
 
 type RabbitEventBus struct {
-	connection *RabbitMqConnection
+	connection   *RabbitMqConnection
+	exchangeName string
 }
 
-func NewRabbitEventBus(connection *RabbitMqConnection) *RabbitEventBus {
+func NewRabbitEventBus(connection *RabbitMqConnection, exchangeName string) *RabbitEventBus {
 	return &RabbitEventBus{
-		connection: connection,
+		connection:   connection,
+		exchangeName: exchangeName,
 	}
 }
 
@@ -26,7 +28,7 @@ func (r *RabbitEventBus) Publish(events []event.DomainEvent) error {
 		}
 
 		err := r.connection.Publish(
-			"domain_events",
+			r.exchangeName,
 			e.EventName(),
 			buffer.Data,
 			event.OptionsEventBus{
@@ -42,12 +44,12 @@ func (r *RabbitEventBus) Publish(events []event.DomainEvent) error {
 	return nil
 }
 
-func (r *RabbitEventBus) Consume() utils.Result[<-chan amqp091.Delivery] {
+func (r *RabbitEventBus) Consume(queue, key string) utils.Result[<-chan amqp091.Delivery] {
 	return r.connection.Consume(
-		"domain_events",
+		r.exchangeName,
 		event.OptionsQueue{
-			Name: "user_events",
-			Key:  "user.registered",
+			Name: queue,
+			Key:  key,
 		},
 	)
 }

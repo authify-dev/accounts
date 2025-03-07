@@ -9,7 +9,7 @@ import (
 
 type EventBus interface {
 	Publish(events []DomainEvent) error
-	Consume() utils.Result[<-chan amqp091.Delivery]
+	Consume(queue, key string) utils.Result[<-chan amqp091.Delivery]
 }
 
 type SettingsEventBus struct {
