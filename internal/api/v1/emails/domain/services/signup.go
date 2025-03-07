@@ -5,8 +5,6 @@ import (
 	"accounts/internal/api/v1/emails/domain/entities"
 	email_events "accounts/internal/api/v1/emails/domain/events"
 	"accounts/internal/api/v1/emails/domain/steps"
-	logins "accounts/internal/api/v1/login_methods/domain/entities"
-	refreshs "accounts/internal/api/v1/refresh_tokens/domain/entities"
 	"errors"
 	"fmt"
 
@@ -110,10 +108,7 @@ func (s EmailsService) registerLogin(ctx context.Context, registerUserFlow Regis
 				s.login_methods_repository,
 				user.ID,
 				email.ID,
-			),
-			steps.NewCreateRefreshTokenStep(
-				s.refresh_repository,
-				user.ID,
+				"email",
 			),
 			steps.NewCreateCodeStep(
 				s.codes_repository,
@@ -140,21 +135,6 @@ type GenerateTokensFlow struct {
 	refresh_token string
 }
 
-func (s EmailsService) generateTokens(results_login map[string]utils.Result[any]) utils.Either[GenerateTokensFlow] {
-	login := results_login["entities.LoginMethod"].Data.(logins.LoginMethod)
-
-	jwt := login.ToJWT(s.jwt_controller)
-
-	refresh := results_login["entities.RefreshToken"].Data.(refreshs.RefreshToken)
-
-	refresh_token := refresh.ToJWT(s.jwt_controller)
-
-	return utils.Either[GenerateTokensFlow]{Data: GenerateTokensFlow{
-		jwt:           jwt,
-		refresh_token: refresh_token,
-	}}
-}
-
 func (s EmailsService) publishEvent(email string, user_name string, code string) {
 
 	user_event := email_events.UserRegistered{
@@ -168,6 +148,7 @@ func (s EmailsService) publishEvent(email string, user_name string, code string)
 		user_event,
 	}); err != nil {
 		log.Println("Error al publicar el evento new-users")
+		log.Println(err)
 	}
 }
 
@@ -204,22 +185,20 @@ func (s *EmailsService) SignUp(
 
 	entry.Info("Login, Refresh Token and Code created")
 
-	// Crear JWT y refresh token
-	result_tokens := s.generateTokens(results_login)
-
-	response := utils.Responses[entities.SignUpResponse]{Body: entities.SignUpResponse{
-		JWT:          result_tokens.Data.jwt,
-		RefreshToken: result_tokens.Data.refresh_token,
-	}, StatusCode: 201}
-
-	entry.Info("JWT and Refresh Token created")
-
 	// Publicar evento
 	code := results_login["entities.Code"].Data.(codes.Code)
 
 	s.publishEvent(entity.Email, entity.UserName, code.Code)
 
 	entry.Info("Event published")
+
+	// Response
+
+	response := utils.Responses[entities.SignUpResponse]{
+		Body: entities.SignUpResponse{
+			Message: "User created check your email by activate your account",
+		},
+	}
 
 	return response
 }
