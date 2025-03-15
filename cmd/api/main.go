@@ -14,7 +14,8 @@ func main() {
 
 	settings.LoadEnvs()
 
-	go queue.InitQueue()
+	go queue.SendActivationEmails()
+	go queue.SendWelcomeEmails()
 
 	server.Run()
 }
