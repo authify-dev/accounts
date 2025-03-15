@@ -15,6 +15,7 @@ type Config struct {
 	ENVIRONMENT string `required:"false"`
 	PORT        int    `required:"false" default:"8000"`
 	TIMESTAMP   string `required:"false"`
+	APP_NAME    string `required:"false" default:"accounts"`
 
 	// Database
 	POSTGRES_DSN string `required:"true"`
@@ -39,6 +40,11 @@ type Config struct {
 	EMAIL_SENDER          string `required:"true"`
 	EMAIL_SENDER_PASSWORD string `required:"true"`
 	EMAIL_CLIENT          string `required:"true"`
+
+	// Email Templates
+	EMAIL_TEMPLATE_ACTIVATION_URL string `required:"true"`
+	EMAIL_TEMPLATE_RESET_URL      string `required:"true"`
+	EMAIL_TEMPLATE_WELCOME_URL    string `required:"true"`
 }
 
 var Settings Config
