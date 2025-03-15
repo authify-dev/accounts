@@ -69,7 +69,7 @@ func (s *CreateUserStep) Call(ctx context.Context, payload utils.Result[any], al
 
 	if result.Err != nil {
 		entry.Error("error saving user")
-		return utils.Result[any]{Err: err}
+		return utils.Result[any]{Err: result.Err}
 	}
 
 	s.user_id = result.Data
