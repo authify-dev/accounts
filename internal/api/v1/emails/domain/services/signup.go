@@ -135,7 +135,7 @@ type GenerateTokensFlow struct {
 	refresh_token string
 }
 
-func (s EmailsService) publishEvent(email string, user_name string, code string) {
+func (s EmailsService) publishRegisteredUserEvent(email string, user_name string, code string) {
 
 	user_event := email_events.UserRegistered{
 		Email:            email,
@@ -188,7 +188,7 @@ func (s *EmailsService) SignUp(
 	// Publicar evento
 	code := results_login["entities.Code"].Data.(codes.Code)
 
-	s.publishEvent(entity.Email, entity.UserName, code.Code)
+	s.publishRegisteredUserEvent(entity.Email, entity.UserName, code.Code)
 
 	entry.Info("Event published")
 
