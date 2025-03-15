@@ -8,7 +8,6 @@ import (
 	postgres_role "accounts/internal/db/postgres/role"
 	"time"
 
-	"github.com/google/uuid"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -24,7 +23,7 @@ func UseCase(repo repositories.RoleRepository) {
 		Name:        "Admin",
 		Description: "Administrador",
 		Entity: domain.Entity{
-			ID:        uuid.New(),
+			ID:        "uuid.New()",
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 			IsRemoved: false,
@@ -35,7 +34,7 @@ func UseCase(repo repositories.RoleRepository) {
 		Name:        "User",
 		Description: "Usuario",
 		Entity: domain.Entity{
-			ID:        uuid.New(),
+			ID:        "uuid.New()",
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 			IsRemoved: false,
