@@ -19,6 +19,8 @@ type LoginMethod struct {
 	UserID     string `json:"user_id,omitempty"`
 	EntityID   string `json:"entity_id,omitempty"`
 	EntityType string `json:"entity_type,omitempty"`
+	IsActive   bool   `json:"is_active,omitempty"`
+	IsVerify   bool   ` json:"is_verify,omitempty"`
 }
 
 func (r LoginMethod) ToJSON() map[string]interface{} {
