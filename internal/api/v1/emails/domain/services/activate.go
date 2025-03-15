@@ -2,12 +2,15 @@ package services
 
 import (
 	"accounts/internal/api/v1/emails/domain/entities"
+	email_events "accounts/internal/api/v1/emails/domain/events"
 	"accounts/internal/common/logger"
 	"accounts/internal/core/domain"
 	"accounts/internal/core/domain/criteria"
+	"accounts/internal/core/domain/event"
 	"accounts/internal/utils"
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	logins "accounts/internal/api/v1/login_methods/domain/entities"
@@ -143,6 +146,10 @@ func (s *EmailsService) Activate(
 		}
 	}
 
+	s.codes_repository.UpdateByFields(code.ID, map[string]interface{}{
+		"is_removed": true,
+	})
+
 	result := s.generateTokens(login, refreshs_result.Data)
 
 	if result.Err != nil {
@@ -151,6 +158,8 @@ func (s *EmailsService) Activate(
 			Errors:     []string{result.Err.Error()},
 		}
 	}
+
+	s.publishActivationUserEvent(entity.Email, entity.Email)
 
 	return utils.Responses[entities.ActivateResponse]{
 		StatusCode: 200,
@@ -196,5 +205,21 @@ func (s EmailsService) createRefreshToken(ctx context.Context, login logins.Logi
 
 	return utils.Either[refreshs.RefreshToken]{
 		Data: entity,
+	}
+}
+
+func (s EmailsService) publishActivationUserEvent(email, user_name string) {
+
+	user_event := email_events.UserActivated{
+		Email:    email,
+		UserName: user_name,
+	}
+
+	// Agregar el mensaje a la cola "new-users"
+	if err := s.event_bus.Publish([]event.DomainEvent{
+		user_event,
+	}); err != nil {
+		log.Println("Error al publicar el evento new-users")
+		log.Println(err)
 	}
 }
