@@ -2,11 +2,14 @@ package services
 
 import (
 	"accounts/internal/api/v1/emails/domain/entities"
+	email_events "accounts/internal/api/v1/emails/domain/events"
 	"accounts/internal/common/logger"
 	"accounts/internal/core/domain"
 	"accounts/internal/core/domain/criteria"
+	"accounts/internal/core/domain/event"
 	"accounts/internal/utils"
 	"context"
+	"log"
 	"math/rand"
 	"time"
 
@@ -123,7 +126,7 @@ func (s *EmailsService) ResendActivationCode(
 
 	// Publish event
 
-	s.publishEvent(entity.Email, user.UserName, code.Code)
+	s.publishResendCodeEvent(entity.Email, user.UserName, code.Code)
 
 	entry.Info("Event published")
 
@@ -132,6 +135,23 @@ func (s *EmailsService) ResendActivationCode(
 		Body: entities.ResendActivationCodeResponse{
 			Message: "Activation code sent",
 		},
+	}
+}
+
+func (s EmailsService) publishResendCodeEvent(email string, user_name string, code string) {
+
+	user_event := email_events.UserRegistered{
+		Email:            email,
+		CodeVerification: code,
+		UserName:         user_name,
+	}
+
+	// Agregar el mensaje a la cola "new-users"
+	if err := s.event_bus.Publish([]event.DomainEvent{
+		user_event,
+	}); err != nil {
+		log.Println("Error al publicar el evento new-users")
+		log.Println(err)
 	}
 }
 
