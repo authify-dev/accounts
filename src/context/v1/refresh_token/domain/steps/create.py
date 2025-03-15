@@ -17,9 +17,9 @@ class CreateRefreshTokenStep(StepSAGA):
     ):
         self.entity = entity
         self.repository = repository
+        self.refresh_token = None
 
     def __call__(self, payload: None = None, all_payloads: dict | None = None):  # noqa: ARG002
-        self.refresh_token = None
 
         expires_at = datetime.now().astimezone() + timedelta(seconds=settings.TIME_SECONDS_EXPIRE_REFRESH_TOKEN_JWT)
 

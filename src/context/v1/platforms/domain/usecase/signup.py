@@ -1,7 +1,7 @@
-from typing import TYPE_CHECKING
 
 from context.v1.login_methods.domain.steps.create import CreateLoginMethodStep
 from context.v1.login_methods.domain.steps.create_jwt import CreateJWTStep
+from context.v1.login_methods.domain.steps.search import SearchLoginMethodByPlatformStep
 from context.v1.platforms.domain.entities.platform import PlatformEntity
 from context.v1.platforms.domain.entities.singup import SignupPlatformEntity
 from context.v1.platforms.domain.steps.create import CreatePlatformStep
@@ -13,10 +13,6 @@ from context.v1.refresh_token.domain.steps.create import CreateRefreshTokenStep
 from context.v1.users.domain.steps.create import CreateUserByUserNameStep
 from shared.app.controllers.saga.controller import SagaController
 from shared.databases.infrastructure.repository import RepositoryInterface
-
-if TYPE_CHECKING:
-    from context.v1.login_methods.domain.entities.login_method import LoginMethodEntity
-    from context.v1.users.domain.entities.user import UserEntity
 
 
 class SignUpPlatformUseCase:
@@ -51,22 +47,41 @@ class SignUpPlatformUseCase:
                     platform=payload.platform,
                     repository=self.repository,
                 ),
+                # TODO: Validate the Token
                 CreatePlatformStep(repository=self.repository, entity=platform),
                 CreateLoginMethodStep(repository=self.login_method_repository),
             ],
         )
-        payloads = controller.execute()
+        try :  # noqa: SIM105
+            controller.execute()
+        except Exception:  # noqa: BLE001, S110
+            pass
 
-        user_entity: UserEntity = payloads[CreateUserByUserNameStep]
-        login_method_entity: LoginMethodEntity = payloads[CreateLoginMethodStep]
+
+        controller_login = SagaController(
+            [
+                SearchPlatformStep(
+                    external_id=payload.external_id,
+                    platform=payload.platform,
+                    repository=self.repository,
+                ),
+                SearchLoginMethodByPlatformStep(
+                    repository=self.login_method_repository,
+                ),
+            ],
+        )
+
+        payloads_login = controller_login.execute()
+
+        login_method_entity = payloads_login[SearchLoginMethodByPlatformStep]
 
         controller_jwt = SagaController(
             [
-                CreateJWTStep(login_method=payloads[CreateLoginMethodStep]),
+                CreateJWTStep(login_method=login_method_entity),
                 CreateRefreshTokenStep(
                     repository=self.refresh_token_repository,
                     entity=CreateRefreshTokenEntity(
-                        user_id=user_entity.id,
+                        user_id=login_method_entity.user_id,
                         login_method_id=login_method_entity.id,
                     ),
                 ),

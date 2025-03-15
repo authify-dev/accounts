@@ -7,9 +7,9 @@ class CreateCodeStep(StepSAGA):
     def __init__(self, entity: CodeEntity, repository: RepositoryInterface):
         self.entity = entity
         self.repository = repository
+        self.code = None
 
     def __call__(self, payload: None = None, all_payloads: dict | None = None):  # noqa: ARG002
-        self.code = None
         self.code = self.repository.add(**self.entity.model_dump())
         return self.code
 

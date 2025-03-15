@@ -13,12 +13,13 @@ RUN apk update && apk add --no-cache \
 
 WORKDIR /application/src
 
-COPY ./pyproject.toml ./poetry.lock* /tmp/
-RUN cd /tmp \
-    && poetry export -f requirements.txt --output /application/requirements.txt --without-hashes --dev \
-    && pip install --no-warn-script-location --disable-pip-version-check --no-cache-dir -r /application/requirements.txt \
-    && rm -rf /tmp/*
+# Copiar archivos de configuración de Poetry
+COPY pyproject.toml poetry.lock* ./
+
+# Instalar dependencias de Poetry
+RUN poetry install --no-root --only main
 
 COPY ./src /application/src
 EXPOSE 9000
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port 9000 --workers 1"]
+CMD ["poetry", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "9000", "--workers", "2"]
+

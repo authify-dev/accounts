@@ -7,12 +7,14 @@ from context.v1.refresh_token.domain.entities.refresh_token import (
     CreateRefreshTokenEntity,
 )
 from context.v1.refresh_token.domain.steps.create import CreateRefreshTokenStep
+from core.settings import email_client
 from shared.app.controllers.saga.controller import SagaController
 from shared.app.enums.code_type import CodeTypeEnum
 from shared.app.enums.user_login_methods import UserLoginMethodsTypeEnum
 from shared.app.errors.invalid.code_alredy_use import CodeAlreadyUsedError
 from shared.databases.errors.entity_not_found import EntityNotFoundError
 from shared.databases.infrastructure.repository import RepositoryInterface
+from shared.presentation.templates.email import get_data_for_email_activation_success
 
 if TYPE_CHECKING:
     from shared.databases.orms.sqlalchemy.models.code import CodeModel
@@ -108,5 +110,15 @@ class ActivationEmailUseCase:
         jwt = payloads_jwt[CreateJWTStep]
 
         refresh_token = payloads_jwt[CreateRefreshTokenStep]
+
+        subject_text, message_text = get_data_for_email_activation_success(
+            user_name=payload.email
+        )
+
+        email_client.send_email(
+            email_subject=payload.email,
+            subject_text=subject_text,
+            message_text=message_text,
+        )
 
         return jwt, refresh_token

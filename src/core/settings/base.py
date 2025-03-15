@@ -33,6 +33,7 @@ ENV_FILE_PATH = ENVS_DIR / EnvironmentsTypes.get_env_file_name(ENVIRONMENT)
 class Settings(PydanticBaseSettings):
     model_config = SettingsConfigDict(env_file=ENV_FILE_PATH, extra="ignore", case_sensitive=True)
     ENVIRONMENT: str = ENVIRONMENT
+    API_KEY: str
 
     # Project Constants
     # ----------------------------------------------------------------
@@ -46,6 +47,12 @@ class Settings(PydanticBaseSettings):
     API_V1: str = "v1"
     CORS_ORIGINS: ClassVar[list[str]] = ["*"]
     SHOW_CRUDS_IN_SWAGGER_SCHEMA: bool = False
+    EMAIL_ACTIVATION_TEMPLATE_URL: str
+    EMAIL_ACTIVATION_TEMPLATE: str | None = None
+
+    EMAIL_WELCOME_TEMPLATE_URL: str
+    EMAIL_WELCOME_TEMPLATE: str | None = None
+
 
     # Database settings
     # ----------------------------------------------------------------
@@ -93,7 +100,7 @@ class Settings(PydanticBaseSettings):
     PASSWORD_LOWERCASE_COUNT: int = 1
     PASSWORD_DIGIT_COUNT: int = 1
     PASSWORD_SPECIAL_CHAR_COUNT: int = 1
-    PASSWORD_SPECIAL_CHARS: str = '[!@#$%^&*(),.?":{}|<>]'
+    PASSWORD_SPECIAL_CHARS: str = '[!@#$%^&*(),.?":{}|<>]'  # noqa: S105
 
     PASSWORD_VALIDATIONS: list[str] = [
         "MIN_LENGTH",
@@ -125,3 +132,12 @@ class Settings(PydanticBaseSettings):
     DEFAULT_PAGE_SIZE: int = 30
     DEFAULT_ORDER_FIELD: str = "created"
     TIMESTAP: datetime = datetime.now().astimezone().strftime(format=DATE_TIME_FORMAT)
+
+
+    # Goolge Auth
+    # ----------------------------------------------------------------
+    GOOGLE_OAUTH_CLIENT_ID: str
+    GOOGLE_OAUTH_CLIENT_SECRET: str
+    GOOGLE_OAUTH_REDIRECT_URI: str
+    GOOGLE_OAUTH_SCOPES: str
+

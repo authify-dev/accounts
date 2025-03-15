@@ -1,10 +1,16 @@
-from context.v1.login_methods.domain.entities.login_method import LoginMethodEntity
+from typing import TYPE_CHECKING
+
 from context.v1.login_methods.domain.steps.create_jwt import CreateJWTStep
-from context.v1.refresh_token.domain.entities.refresh_token import RefreshTokenEntity
 from shared.app.controllers.saga.controller import SagaController
 from shared.app.errors.invalid.jwt_invalid import JWTInvalidError
-from shared.app.handlers.jwt import JWTHandler, RefreshTokenHandler
+from shared.app.handlers.jwt import RefreshTokenHandler
 from shared.databases.infrastructure.repository import RepositoryInterface
+
+if TYPE_CHECKING:
+    from context.v1.login_methods.domain.entities.login_method import LoginMethodEntity
+    from context.v1.refresh_token.domain.entities.refresh_token import (
+        RefreshTokenEntity,
+    )
 
 
 class RefreshTokenUseCase:
