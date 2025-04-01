@@ -36,6 +36,7 @@ func (s *CreateCodeStep) Call(ctx context.Context, payload utils.Result[any], al
 		UserID: s.user_id,
 		Entity: domain.Entity{},
 		Code:   generateCode(6),
+		Type:   "activation",
 	}
 
 	result := s.codes_repo.Save(code_entity)

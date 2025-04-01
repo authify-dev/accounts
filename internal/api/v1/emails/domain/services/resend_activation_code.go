@@ -78,6 +78,11 @@ func (s *EmailsService) ResendActivationCode(
 					Value:    false,
 					Operator: criteria.OperatorEqual,
 				},
+				{
+					Field:    "type",
+					Value:    "activation",
+					Operator: criteria.OperatorEqual,
+				},
 			},
 		),
 	}
