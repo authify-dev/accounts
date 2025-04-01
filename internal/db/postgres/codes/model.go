@@ -22,6 +22,8 @@ type CodeModel struct {
 	Code string `gorm:"type:varchar(255);not null;" json:"code"`
 
 	UserID string `gorm:"type:varchar(50);not null" json:"user_id"`
+
+	Type string `gorm:"type:varchar(50);not null" json:"type"`
 	// La etiqueta foreignKey indica cuál es el campo en este modelo que es llave foránea,
 	// y references indica a qué campo del modelo relacionado hace referencia.
 	UserModel postgres_users.UserModel `gorm:"foreignKey:UserID;references:ID" json:"user"`

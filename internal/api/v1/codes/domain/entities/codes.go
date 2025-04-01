@@ -16,6 +16,7 @@ type Code struct {
 	domain.Entity
 	Code   string `json:"code,omitempty"`
 	UserID string `json:"user_id,omitempty"`
+	Type   string `json:"type,omitempty"`
 	//User   string `json:"user,omitempty"`
 }
 
