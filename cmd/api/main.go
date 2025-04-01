@@ -18,6 +18,7 @@ func main() {
 
 	go queue.SendActivationEmails(eventBus)
 	go queue.SendWelcomeEmails(eventBus)
+	go queue.SendResetPasswordEmails(eventBus)
 
 	server.Run()
 }
