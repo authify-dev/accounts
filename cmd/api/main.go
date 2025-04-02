@@ -1,7 +1,6 @@
 package main
 
 import (
-	"accounts/cmd/queue"
 	"accounts/internal/api/server"
 	"accounts/internal/core/settings"
 	"fmt"
@@ -14,11 +13,11 @@ func main() {
 
 	settings.LoadEnvs()
 
-	eventBus := queue.SetUpEventBus()
+	//eventBus := queue.SetUpEventBus()
 
-	go queue.SendActivationEmails(eventBus)
-	go queue.SendWelcomeEmails(eventBus)
-	go queue.SendResetPasswordEmails(eventBus)
+	//go queue.SendActivationEmails(eventBus)
+	//go queue.SendWelcomeEmails(eventBus)
+	//go queue.SendResetPasswordEmails(eventBus)
 
 	server.Run()
 }
