@@ -2,17 +2,22 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Run API fast api",
-            "type": "debugpy",
+            "name": "Launch file",
+            "type": "go",
             "request": "launch",
-            "module": "uvicorn",
-            "args": [
-                "main:app",
-                "--reload",
-                "--port", "7899"
-            ],
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/src"
+            "mode": "debug",
+            "program": "${file}",
+            "cwd": "${workspaceFolder}",
+        },
+        {
+            "name": "API Go",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/api/main.go",
+            "cwd": "${workspaceFolder}",
+            "env": {},
+            "args": []
         }
     ]
 }

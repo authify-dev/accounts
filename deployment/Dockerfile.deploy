@@ -1,24 +1,36 @@
-FROM python:3.13-alpine
 
-ENV PYTHONUNBUFFERED=1
-ENV ROOT_PATH=""
-RUN apk update && apk add --no-cache \
-    gcc \
-    musl-dev \
-    libpq-dev \
-    postgresql-dev \
-    && pip install --upgrade pip \
-    && pip install -U poetry==1.8.5 \
-    && pip install gunicorn uvicorn[standard]
+# Etapa 1: Compilación
+FROM golang:1.23.4-alpine AS builder
 
-WORKDIR /application/src
+# Variables de entorno para Go
+ENV CGO_ENABLED=0 \
+    GOOS=linux \
+    GOARCH=amd64
 
-COPY ./pyproject.toml ./poetry.lock* /tmp/
-RUN cd /tmp \
-    && poetry export -f requirements.txt --output /application/requirements.txt --without-hashes --dev \
-    && pip install --no-warn-script-location --disable-pip-version-check --no-cache-dir -r /application/requirements.txt \
-    && rm -rf /tmp/*
+WORKDIR /app
 
-COPY ./src /application/src
-EXPOSE 9000
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port 9000 --workers 1"]
+# Instala dependencias necesarias
+RUN apk add --no-cache git
+
+# Copia los archivos del proyecto
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+# Compila el binario de la aplicación
+RUN go build -o /app/main ./cmd/api/main.go
+
+# Etapa 2: Ejecución
+FROM alpine:latest
+
+WORKDIR /root/
+
+# Copia el binario desde la etapa de compilación
+COPY --from=builder /app/main .
+
+# Especifica el puerto en el que escucha la app (si es necesario)
+EXPOSE 8000
+
+# Ejecuta la aplicación
+CMD ["./main"]
