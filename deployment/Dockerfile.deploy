@@ -1,3 +1,4 @@
+
 # Etapa 1: Compilación
 FROM golang:1.23.4-alpine AS builder
 
@@ -33,4 +34,3 @@ EXPOSE 8000
 
 # Ejecuta la aplicación
 CMD ["./main"]
-
