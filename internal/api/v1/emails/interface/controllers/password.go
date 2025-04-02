@@ -4,10 +4,8 @@ import (
 	"accounts/internal/api/v1/emails/interface/dtos"
 	"accounts/internal/common/logger"
 	"accounts/internal/common/requests"
-	"accounts/internal/common/responses"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gofiber/fiber/v2"
 )
 
 func (c *EmailsController) ResetPassword(ctx *gin.Context) {
@@ -28,21 +26,17 @@ func (c *EmailsController) ResetPassword(ctx *gin.Context) {
 }
 
 func (c *EmailsController) ResetPasswordConfirm(ctx *gin.Context) {
-	customResponse := responses.Response{
-		Status: fiber.StatusOK,
-		Data:   "ResetPasswordConfirm",
-	}
+	entry := logger.FromContext(ctx.Request.Context())
 
-	// Se almacena el objeto para que el middleware lo procese
-	ctx.JSON(fiber.StatusOK, customResponse)
-}
+	entry.Info("ResetPassword Confirm")
 
-func (c *EmailsController) ResetPasswordResendCode(ctx *gin.Context) {
-	customResponse := responses.Response{
-		Status: fiber.StatusOK,
-		Data:   "ResetPasswordResendCode",
-	}
+	dto := requests.GetDTO[dtos.ConfirmPasswordDTO](ctx)
 
-	// Se almacena el objeto para que el middleware lo procese
-	ctx.JSON(fiber.StatusOK, customResponse)
+	entity := dto.ToEntity()
+	entry.Infof("DTO: %v", dto)
+	entry.Infof("Entity: %v", entity)
+
+	response := c.userService.ConfirmPassword(ctx.Request.Context(), entity)
+
+	ctx.JSON(response.StatusCode, response.ToMap())
 }
