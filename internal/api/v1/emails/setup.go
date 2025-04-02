@@ -9,6 +9,7 @@ import (
 	"accounts/internal/api/v1/emails/interface/controllers"
 	utils_controller "accounts/internal/common/controllers"
 	"accounts/internal/core/domain/event"
+	"accounts/internal/core/infrastructure/event_bus/local"
 	"accounts/internal/core/infrastructure/event_bus/rabbit"
 	"accounts/internal/core/settings"
 	codes "accounts/internal/db/postgres/codes"
@@ -38,7 +39,7 @@ func SetupEmailsModule(app *gin.Engine) {
 			PrivateKey: settings.Settings.PRIVATE_KEY_JWT,
 		},
 		utils_controller.NewPasswordController(settings.Settings.SECRET_PASSWORD),
-		eventBus(),
+		LocalEventBus(),
 	)
 
 	controller := controllers.NewEmailsController(*service)
@@ -83,4 +84,8 @@ func eventBus() event.EventBus {
 	)
 
 	return event_bus
+}
+
+func LocalEventBus() event.EventBus {
+	return local.MockEventBus()
 }
