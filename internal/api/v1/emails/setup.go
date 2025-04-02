@@ -56,7 +56,6 @@ func SetupEmailsModule(app *gin.Engine) {
 
 	group.POST("/reset", controller.ResetPassword)
 	group.POST("/reset-confirm", controller.ResetPasswordConfirm)
-	group.POST("/reset/resend-code", controller.ResetPasswordResendCode)
 }
 
 func eventBus() event.EventBus {
