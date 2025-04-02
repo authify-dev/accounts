@@ -27,3 +27,27 @@ func (u ResetPassword) AggregateID() string {
 func (u ResetPassword) EventID() string {
 	return uuid.New().String()
 }
+
+type ChangedPassword struct {
+	Email    string `json:"email"`
+	UserName string `json:"user"`
+}
+
+func (u ChangedPassword) ToPrimitive() map[string]interface{} {
+	return map[string]interface{}{
+		"email": u.Email,
+		"user":  u.UserName,
+	}
+}
+
+func (u ChangedPassword) EventName() string {
+	return "user.changed_password"
+}
+
+func (u ChangedPassword) AggregateID() string {
+	return ""
+}
+
+func (u ChangedPassword) EventID() string {
+	return uuid.New().String()
+}

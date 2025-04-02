@@ -2,11 +2,14 @@ package services
 
 import (
 	"accounts/internal/api/v1/emails/domain/entities"
+	email_events "accounts/internal/api/v1/emails/domain/events"
 	"accounts/internal/common/logger"
 	"accounts/internal/core/domain/criteria"
+	"accounts/internal/core/domain/event"
 	"accounts/internal/utils"
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	code_ents "accounts/internal/api/v1/codes/domain/entities"
@@ -24,6 +27,7 @@ func (s *EmailsService) ConfirmPassword(
 	// Get email entity
 	email := s.getEmail(ctx, entity.Email)
 	if email.Err != nil {
+		entry.Error("Error al obtener el email")
 		return utils.Responses[entities.ResetPasswordResponse]{
 			StatusCode: 500,
 			Err:        email.Err,
@@ -33,6 +37,7 @@ func (s *EmailsService) ConfirmPassword(
 	// Check if the code is valid
 	code := s.verifyCode(ctx, email.Data.UserID, "reset_password", entity.Code)
 	if code.Err != nil {
+		entry.Error("Error al verificar el codigo")
 		return utils.Responses[entities.ResetPasswordResponse]{
 			StatusCode: 500,
 			Err:        code.Err,
@@ -42,6 +47,7 @@ func (s *EmailsService) ConfirmPassword(
 	// Get login method
 	login := s.getLoginMethod(ctx, email.Data.ID)
 	if login.Err != nil {
+		entry.Error("Error al obtener el login method")
 		return utils.Responses[entities.ResetPasswordResponse]{
 			StatusCode: 500,
 			Err:        login.Err,
@@ -52,6 +58,7 @@ func (s *EmailsService) ConfirmPassword(
 		"is_verify": true,
 	})
 	if err != nil {
+		entry.Error("Error al actualizar el login method")
 		return utils.Responses[entities.ResetPasswordResponse]{
 			StatusCode: 500,
 			Err:        err,
@@ -62,6 +69,7 @@ func (s *EmailsService) ConfirmPassword(
 		"is_removed": true,
 	})
 	if err != nil {
+		entry.Error("Error al actualizar el codigo")
 		return utils.Responses[entities.ResetPasswordResponse]{
 			StatusCode: 500,
 			Err:        err,
@@ -70,6 +78,7 @@ func (s *EmailsService) ConfirmPassword(
 
 	pass_hashed, err := s.password_controller.HashPassword(entity.Password)
 	if err != nil {
+		entry.Error("Error al hashear la contraseña")
 		return utils.Responses[entities.ResetPasswordResponse]{
 			StatusCode: 500,
 			Err:        err,
@@ -81,11 +90,14 @@ func (s *EmailsService) ConfirmPassword(
 	})
 
 	if err != nil {
+		entry.Error("Error al actualizar la contraseña")
 		return utils.Responses[entities.ResetPasswordResponse]{
 			StatusCode: 500,
 			Err:        err,
 		}
 	}
+
+	s.publishChangedPasswordEvent(email.Data.Email, email.Data.Email)
 
 	return utils.Responses[entities.ResetPasswordResponse]{
 		StatusCode: 200,
@@ -123,12 +135,14 @@ func (s *EmailsService) getLoginMethod(
 
 	logins, err := s.login_methods_repository.Matching(criteria_login)
 	if err != nil {
+		entry.Error("Error al obtener el login method")
 		return utils.Result[login_ents.LoginMethod]{
 			Err: err,
 		}
 	}
 
 	if len(logins) == 0 {
+		entry.Error("Login method not found")
 		return utils.Result[login_ents.LoginMethod]{
 			Err: fmt.Errorf("login method not found"),
 		}
@@ -180,12 +194,14 @@ func (s *EmailsService) verifyCode(
 
 	codes, err := s.codes_repository.Matching(criteria_code)
 	if err != nil {
+		entry.Error("Error al obtener el codigo")
 		return utils.Result[code_ents.Code]{
 			Err: err,
 		}
 	}
 
 	if len(codes) == 0 {
+		entry.Error("Code not found")
 		return utils.Result[code_ents.Code]{
 			Err: fmt.Errorf("code not found"),
 		}
@@ -194,6 +210,7 @@ func (s *EmailsService) verifyCode(
 	code_ent := codes[0]
 
 	if code_ent.Code != code {
+		entry.Error("Code not valid")
 		return utils.Result[code_ents.Code]{
 			Err: fmt.Errorf("code not valid"),
 		}
@@ -205,6 +222,11 @@ func (s *EmailsService) verifyCode(
 }
 
 func (s *EmailsService) getEmail(ctx context.Context, email string) utils.Result[entities.Email] {
+
+	// Logger
+	entry := logger.FromContext(ctx)
+	entry.Info("Get Email")
+
 	// Get email entity
 	criteria_email := criteria.Criteria{
 		Filters: *criteria.NewFilters(
@@ -220,12 +242,14 @@ func (s *EmailsService) getEmail(ctx context.Context, email string) utils.Result
 
 	emails, err := s.repository.Matching(criteria_email)
 	if err != nil {
+		entry.Error("Error al obtener el email")
 		return utils.Result[entities.Email]{
 			Err: err,
 		}
 	}
 
 	if len(emails) == 0 {
+		entry.Error("Email not found")
 		return utils.Result[entities.Email]{
 			Err: fmt.Errorf("email not found"),
 		}
@@ -235,5 +259,21 @@ func (s *EmailsService) getEmail(ctx context.Context, email string) utils.Result
 
 	return utils.Result[entities.Email]{
 		Data: emailEntity,
+	}
+}
+
+func (s EmailsService) publishChangedPasswordEvent(email string, user_name string) {
+
+	user_event := email_events.ChangedPassword{
+		Email:    email,
+		UserName: user_name,
+	}
+
+	// Agregar el mensaje a la cola "new-users"
+	if err := s.event_bus.Publish([]event.DomainEvent{
+		user_event,
+	}); err != nil {
+		log.Println("Error al publicar el evento changed_password")
+		log.Println(err)
 	}
 }
