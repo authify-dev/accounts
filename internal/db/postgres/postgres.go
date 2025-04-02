@@ -6,6 +6,7 @@ import (
 	"accounts/internal/utils"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
@@ -145,6 +146,9 @@ func (r *PostgresRepository[E, M]) Search(id string) (E, error) {
 // UpdateByFields actualiza los campos indicados en el mapa para el registro con el UUID especificado.
 func (r *PostgresRepository[E, M]) UpdateByFields(uuid string, fields map[string]interface{}) error {
 	var model M
+
+	fields["updated_at"] = time.Now().UTC()
+
 	// Se filtra por el campo "id". Si el nombre de la clave primaria es distinto, cámbialo.
 	if err := r.Connection.Model(&model).
 		Where("id = ?", uuid).
