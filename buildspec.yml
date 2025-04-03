@@ -16,7 +16,6 @@ phases:
     commands:
       - echo "Pusheando la imagen a ECR..."
       - docker push $REPOSITORY_URI:$IMAGE_TAG
-      - 'echo "Imagen subida: $REPOSITORY_URI:$IMAGE_TAG"'
       - printf '[{"name": "imageUri", "value": "%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imageDetail.json
 
 artifacts:
