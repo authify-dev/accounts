@@ -21,5 +21,5 @@ func (c *RefreshTokensController) Create(ctx *gin.Context) {
 
 	response := c.service.Create(ctx.Request.Context(), token.Token)
 
-	ctx.JSON(response.StatusCode, response)
+	ctx.JSON(response.StatusCode, response.ToMap())
 }

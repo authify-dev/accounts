@@ -38,5 +38,7 @@ func (r Responses[R]) ToMap() map[string]interface{} {
 		}
 	}
 
+	responseMap["status_code"] = r.StatusCode
+
 	return responseMap
 }

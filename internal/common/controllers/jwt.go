@@ -75,22 +75,33 @@ func (j *JWTController) GenerateToken(data map[string]interface{}, expireSeconds
 }
 
 // ValidateToken valida un JWT firmado con RS256 y retorna sus claims.
+// Si el token ha expirado, devuelve un error con mensaje personalizado.
 func (j *JWTController) ValidateToken(tokenString string) (map[string]interface{}, error) {
 	pubKey, err := parseRSAPublicKey(j.PublicKey)
 	if err != nil {
 		return nil, err
 	}
+
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if token.Method.Alg() != jwt.SigningMethodRS256.Alg() {
 			return nil, fmt.Errorf("algoritmo inesperado: %s", token.Method.Alg())
 		}
 		return pubKey, nil
 	})
+
+	// Si hay un error al parsear, comprobamos si se debe a expiración
 	if err != nil {
+		var ve *jwt.ValidationError
+		if errors.As(err, &ve) && ve.Errors&jwt.ValidationErrorExpired != 0 {
+			return nil, fmt.Errorf("%v", ve.Inner)
+		}
 		return nil, err
 	}
+
+	// Si el token es válido, retornamos las claims
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		return claims, nil
 	}
+
 	return nil, errors.New("token inválido")
 }

@@ -21,5 +21,5 @@ func (c *RefreshTokensController) Validate(ctx *gin.Context) {
 
 	response := c.service.Validate(ctx.Request.Context(), token.Token)
 
-	ctx.JSON(response.StatusCode, response)
+	ctx.JSON(response.StatusCode, response.ToMap())
 }
