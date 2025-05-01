@@ -1,56 +1,96 @@
 package controllers
 
 import (
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
 )
 
+// JWTController gestiona generación y validación de JWTs usando RSA (RS256).
+// PrivateKey y PublicKey deben contener las claves en formato PEM.
 type JWTController struct {
-	PublicKey  string // No se utiliza en llaves simétricas
-	PrivateKey string // Se utiliza como llave secreta
+	PrivateKey string
+	PublicKey  string
 }
 
-func (j *JWTController) GenerateToken(data map[string]interface{}, expired int) (string, error) {
-	// Creamos un MapClaims para incluir los datos y la expiración
-	claims := jwt.MapClaims{}
-	for key, value := range data {
-		claims[key] = value
+// parseRSAPrivateKey decodifica un PEM PKCS#1 o PKCS#8 en *rsa.PrivateKey.
+func parseRSAPrivateKey(pemStr string) (*rsa.PrivateKey, error) {
+	block, _ := pem.Decode([]byte(pemStr))
+	if block == nil {
+		return nil, errors.New("no se pudo decodificar PEM de clave privada")
 	}
-
-	// Agregamos la expiración, si se especifica
-	if expired > 0 {
-		claims["exp"] = time.Now().Add(time.Duration(expired) * time.Second).Unix()
+	// PKCS#1
+	if priv, err := x509.ParsePKCS1PrivateKey(block.Bytes); err == nil {
+		return priv, nil
 	}
+	// PKCS#8
+	keyIfc, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("falló parseo PKCS#8: %w", err)
+	}
+	priv, ok := keyIfc.(*rsa.PrivateKey)
+	if !ok {
+		return nil, errors.New("clave PKCS#8 no es RSA")
+	}
+	return priv, nil
+}
 
-	// Creamos el token usando el método de firma HS256 (HMAC con SHA-256)
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+// parseRSAPublicKey decodifica un PEM en *rsa.PublicKey.
+func parseRSAPublicKey(pemStr string) (*rsa.PublicKey, error) {
+	block, _ := pem.Decode([]byte(pemStr))
+	if block == nil {
+		return nil, errors.New("no se pudo decodificar PEM de clave pública")
+	}
+	pubIfc, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("falló parseo clave pública: %w", err)
+	}
+	pub, ok := pubIfc.(*rsa.PublicKey)
+	if !ok {
+		return nil, errors.New("clave pública no es RSA")
+	}
+	return pub, nil
+}
 
-	// Firmamos el token con la llave secreta (PrivateKey)
-	tokenString, err := token.SignedString([]byte(j.PrivateKey))
+// GenerateToken crea un JWT con claims personalizados y lo firma con RS256.
+func (j *JWTController) GenerateToken(data map[string]interface{}, expireSeconds int) (string, error) {
+	privKey, err := parseRSAPrivateKey(j.PrivateKey)
 	if err != nil {
 		return "", err
 	}
-	return tokenString, nil
+	claims := jwt.MapClaims{}
+	for k, v := range data {
+		claims[k] = v
+	}
+	if expireSeconds > 0 {
+		claims["exp"] = time.Now().Add(time.Duration(expireSeconds) * time.Second).Unix()
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+	return token.SignedString(privKey)
 }
 
+// ValidateToken valida un JWT firmado con RS256 y retorna sus claims.
 func (j *JWTController) ValidateToken(tokenString string) (map[string]interface{}, error) {
-	// Parseamos el token, indicando cómo obtener la llave de verificación
+	pubKey, err := parseRSAPublicKey(j.PublicKey)
+	if err != nil {
+		return nil, err
+	}
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		// Verificamos que el método de firma sea HMAC
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, jwt.NewValidationError("método de firma inesperado", jwt.ValidationErrorSignatureInvalid)
+		if token.Method.Alg() != jwt.SigningMethodRS256.Alg() {
+			return nil, fmt.Errorf("algoritmo inesperado: %s", token.Method.Alg())
 		}
-		return []byte(j.PrivateKey), nil
+		return pubKey, nil
 	})
 	if err != nil {
 		return nil, err
 	}
-
-	// Validamos que las claims sean del tipo MapClaims y que el token sea válido
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		return claims, nil
 	}
-
-	return nil, jwt.NewValidationError("token inválido", jwt.ValidationErrorSignatureInvalid)
+	return nil, errors.New("token inválido")
 }
