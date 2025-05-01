@@ -20,11 +20,18 @@ func (s *RefreshTokensService) Validate(
 		entry.Error("Failed to validate token", err)
 		return utils.Responses[map[string]interface{}]{
 			StatusCode: 401,
-			Err:        err,
+			Errors:     []string{err.Error()},
 		}
 	}
 
-	entity_type := claim["entity_type"].(string)
+	entity_type, ok := claim["entity_type"].(string)
+	if !ok {
+		entry.Error("entity_type key is missing or not a string in the token")
+		return utils.Responses[map[string]interface{}]{
+			StatusCode: 401,
+			Errors:     []string{"entity_type key is missing or not a string in the token"},
+		}
+	}
 	if entity_type == "" {
 		entry.Error("Token is not a JWT")
 		return utils.Responses[map[string]interface{}]{
