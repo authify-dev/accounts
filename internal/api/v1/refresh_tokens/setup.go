@@ -45,4 +45,7 @@ func SetupRefreshTokensModule(router *gin.Engine) {
 
 	refresh.GET("", controller.Create)
 
+	jwt := router.Group("/api/v1/validate-jwt")
+	jwt.GET("", controller.Validate)
+
 }

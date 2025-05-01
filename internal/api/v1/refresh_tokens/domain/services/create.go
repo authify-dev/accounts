@@ -102,7 +102,7 @@ func (s *RefreshTokensService) Create(
 	jwt := login_method_entity.ToJWT(s.jwt_controller)
 
 	return utils.Responses[entities.SignInResponse]{
-		StatusCode: 200,
+		StatusCode: 201,
 		Body: entities.SignInResponse{
 			JWT:          jwt,
 			RefreshToken: refresh_token,
