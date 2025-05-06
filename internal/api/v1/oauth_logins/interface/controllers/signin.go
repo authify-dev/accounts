@@ -19,7 +19,7 @@ func (c *OAuthController) SignInGoogle(ctx *gin.Context) {
 		return
 	}
 
-	response := c.service.SignInGoogle(ctx.Request.Context(), token.Code)
+	response := c.service.SignInGoogle(ctx.Request.Context(), token.Code, token.Role)
 
 	if response.Err != nil {
 		entry.Error("SignInGoogle", response.Err)
