@@ -7,10 +7,22 @@ import (
 	"accounts/internal/infrastucture/oauth/google/repositories"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+
+	oauths "accounts/internal/db/postgres/oauth_logins"
+	//login_methods "accounts/internal/db/postgres/login_methods"
+	//refresh "accounts/internal/db/postgres/refresh_tokens"
+	//roles "accounts/internal/db/postgres/role"
+	//users "accounts/internal/db/postgres/users"
 )
 
 func SetupOAuthModule(r *gin.Engine) {
 	// infrastructure
+	db, err := gorm.Open(postgres.Open(settings.Settings.POSTGRES_DSN), &gorm.Config{})
+	if err != nil {
+		panic("failed to connect database")
+	}
 
 	// repositories
 	google_repository := repositories.NewOAuthGoogleRepository(
@@ -19,9 +31,12 @@ func SetupOAuthModule(r *gin.Engine) {
 		settings.Settings.GOOGLE_OAUTH_REDIRECT_URI,
 	)
 
+	oauth_repository := oauths.NewOAuthLoginPostgresRepository(db)
+
 	// services
 	serv := services.NewOAuthService(
 		google_repository,
+		oauth_repository,
 	)
 
 	// controllers
