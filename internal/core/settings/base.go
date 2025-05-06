@@ -45,6 +45,11 @@ type Config struct {
 	EMAIL_TEMPLATE_ACTIVATION_URL string `required:"true"`
 	EMAIL_TEMPLATE_RESET_URL      string `required:"true"`
 	EMAIL_TEMPLATE_WELCOME_URL    string `required:"true"`
+
+	// Google OAuth
+	GOOGLE_OAUTH_CLIENT_ID     string `required:"true"`
+	GOOGLE_OAUTH_CLIENT_SECRET string `required:"true"`
+	GOOGLE_OAUTH_REDIRECT_URI  string `required:"true"`
 }
 
 var Settings Config
