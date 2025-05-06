@@ -4,6 +4,7 @@ import (
 	"accounts/internal/api/health"
 	"accounts/internal/api/router"
 	"accounts/internal/api/v1/emails"
+	"accounts/internal/api/v1/oauth_logins"
 	refreshtokens "accounts/internal/api/v1/refresh_tokens"
 	"accounts/internal/api/v1/roles"
 	"accounts/internal/api/v1/users"
@@ -38,5 +39,6 @@ func setUpRouter() *gin.Engine {
 	users.SetupUsersModule(app)
 	emails.SetupEmailsModule(app)
 	refreshtokens.SetupRefreshTokensModule(app)
+	oauth_logins.SetupOAuthModule(app)
 	return app
 }
