@@ -21,6 +21,7 @@ type Responses[R any] struct {
 	Err        error    `json:"error,omitempty"`
 	StatusCode int      `json:"status_code" default:"200"`
 	Errors     []string `json:"errors,omitempty"`
+	Success    bool     `json:"success" default:"true"`
 }
 
 func (r Responses[R]) ToMap() map[string]interface{} {
@@ -38,7 +39,7 @@ func (r Responses[R]) ToMap() map[string]interface{} {
 		}
 	}
 
-	responseMap["status_code"] = r.StatusCode
+	responseMap["success"] = r.Success
 
 	return responseMap
 }
