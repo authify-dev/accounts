@@ -25,6 +25,8 @@ type OAuthLoginModel struct {
 	Platform string `gorm:"type:varchar(255);not null" json:"platform,omitempty"`
 
 	UserModel postgres_users.UserModel `gorm:"foreignKey:UserID;references:ID" json:"user"`
+
+	Email string `gorm:"type:varchar(255)" json:"email,omitempty"`
 }
 
 // TableName especifica el nombre de la tabla en la base de datos.

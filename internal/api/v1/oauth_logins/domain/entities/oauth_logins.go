@@ -16,4 +16,5 @@ type OAuthLogin struct {
 	UserID     string `json:"user_id,omitempty"`
 	ExternalID string `json:"entity_id,omitempty"`
 	Platform   string `json:"platform,omitempty"`
+	Email      string `json:"email,omitempty"`
 }
