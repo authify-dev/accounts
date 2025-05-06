@@ -46,6 +46,7 @@ require (
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-playground/validator/v10 v10.25.0
+	github.com/go-resty/resty/v2 v2.16.5
 	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
