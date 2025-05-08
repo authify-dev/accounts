@@ -7,6 +7,7 @@ import (
 	roles "accounts/internal/api/v1/roles/domain/repositories"
 	users "accounts/internal/api/v1/users/domain/repositories"
 	"accounts/internal/common/controllers"
+	"accounts/internal/core/domain/event"
 )
 
 type OAuthService struct {
@@ -17,6 +18,7 @@ type OAuthService struct {
 	login_method_repository login_methods.LoginMethodRepository
 	refresh_repository      refresh_tokens.RefreshTokenRepository
 	jwt_controller          controllers.JWTController
+	event_bus               event.EventBus
 }
 
 func NewOAuthService(
@@ -27,6 +29,7 @@ func NewOAuthService(
 	login_method_repository login_methods.LoginMethodRepository,
 	refresh_repository refresh_tokens.RefreshTokenRepository,
 	jwt_controller controllers.JWTController,
+	event_bus event.EventBus,
 ) *OAuthService {
 	return &OAuthService{
 		google_repository:       google_repository,
@@ -36,5 +39,6 @@ func NewOAuthService(
 		login_method_repository: login_method_repository,
 		refresh_repository:      refresh_repository,
 		jwt_controller:          jwt_controller,
+		event_bus:               event_bus,
 	}
 }

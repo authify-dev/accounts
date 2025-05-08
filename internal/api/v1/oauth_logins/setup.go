@@ -3,6 +3,7 @@ package oauth_logins
 import (
 	"accounts/internal/api/v1/oauth_logins/domain/services"
 	"accounts/internal/api/v1/oauth_logins/interface/controllers"
+	"accounts/internal/core/infrastructure/event_bus/local"
 	"accounts/internal/core/settings"
 	"accounts/internal/infrastucture/oauth/google/repositories"
 
@@ -51,6 +52,7 @@ func SetupOAuthModule(r *gin.Engine) {
 			PublicKey:  settings.Settings.PUBLIC_KEY_JWT,
 			PrivateKey: settings.Settings.PRIVATE_KEY_JWT,
 		},
+		local.MockEventBus(),
 	)
 
 	// controllers
