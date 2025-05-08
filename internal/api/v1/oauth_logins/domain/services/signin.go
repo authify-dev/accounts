@@ -7,10 +7,14 @@ import (
 	"accounts/internal/common/logger"
 	"accounts/internal/core/domain"
 	"accounts/internal/core/domain/criteria"
+	"accounts/internal/core/domain/event"
 	"accounts/internal/utils"
 	"context"
 	"errors"
 	"fmt"
+	"log"
+
+	email_events "accounts/internal/api/v1/emails/domain/events"
 
 	oauth_steps "accounts/internal/api/v1/oauth_logins/domain/steps"
 
@@ -85,6 +89,7 @@ func (s *OAuthService) SignInGoogle(ctx context.Context, code, role string) util
 	user := users.User{
 		UserName: utils.GenerateRandomUserName(),
 		Role:     role,
+		Name:     user_info_result.Data.Name,
 	}
 
 	// Generar oauth login
@@ -167,6 +172,8 @@ func (s *OAuthService) SignInGoogle(ctx context.Context, code, role string) util
 		}
 	}
 
+	s.publishActivationUserEvent(oauth_ent.Email, user_ent.Name)
+
 	// Enviamos el email de binevenida
 	return utils.Responses[entities.SignInResponse]{
 		Body: entities.SignInResponse{
@@ -214,4 +221,20 @@ func (s OAuthService) generateTokens(login login_methods.LoginMethod, refreshTok
 		jwt:           jwt,
 		refresh_token: refresh_token,
 	}}
+}
+
+func (s OAuthService) publishActivationUserEvent(email, user_name string) {
+
+	user_event := email_events.UserActivated{
+		Email:    email,
+		UserName: user_name,
+	}
+
+	// Agregar el mensaje a la cola "new-users"
+	if err := s.event_bus.Publish([]event.DomainEvent{
+		user_event,
+	}); err != nil {
+		log.Println("Error al publicar el evento new-users")
+		log.Println(err)
+	}
 }
