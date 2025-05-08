@@ -10,11 +10,13 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
+	login_methods "accounts/internal/db/postgres/login_methods"
 	oauths "accounts/internal/db/postgres/oauth_logins"
-	//login_methods "accounts/internal/db/postgres/login_methods"
-	//refresh "accounts/internal/db/postgres/refresh_tokens"
-	//roles "accounts/internal/db/postgres/role"
-	//users "accounts/internal/db/postgres/users"
+	refresh "accounts/internal/db/postgres/refresh_tokens"
+	roles "accounts/internal/db/postgres/role"
+	users "accounts/internal/db/postgres/users"
+
+	utils_controller "accounts/internal/common/controllers"
 )
 
 func SetupOAuthModule(r *gin.Engine) {
@@ -32,11 +34,23 @@ func SetupOAuthModule(r *gin.Engine) {
 	)
 
 	oauth_repository := oauths.NewOAuthLoginPostgresRepository(db)
+	user_repository := users.NewUserPostgresRepository(db)
+	role_repository := roles.NewRolePostgresRepository(db)
+	login_method_repository := login_methods.NewLoginMethodPostgresRepository(db)
+	refresh_repository := refresh.NewRefreshTokenPostgresRepository(db)
 
 	// services
 	serv := services.NewOAuthService(
 		google_repository,
 		oauth_repository,
+		user_repository,
+		role_repository,
+		login_method_repository,
+		refresh_repository,
+		utils_controller.JWTController{
+			PublicKey:  settings.Settings.PUBLIC_KEY_JWT,
+			PrivateKey: settings.Settings.PRIVATE_KEY_JWT,
+		},
 	)
 
 	// controllers
@@ -48,6 +62,6 @@ func SetupOAuthModule(r *gin.Engine) {
 	oauths.GET("/link/google", cntr.LinkGoogle)
 	oauths.POST("/token/google", cntr.TokenGoogle)
 	oauths.GET("/user-info/google", cntr.UserInfoGoogle)
-	oauths.GET("/signin/google", cntr.UserInfoGoogle)
+	oauths.POST("/signin/google", cntr.SignInGoogle)
 
 }
