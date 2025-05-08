@@ -26,16 +26,19 @@ type Responses[R any] struct {
 
 func (r Responses[R]) ToMap() map[string]interface{} {
 	responseMap := make(map[string]interface{})
+	r.Success = true
 
 	if len(r.Errors) > 0 {
 		responseMap["errors"] = r.Errors
 		if r.Err != nil {
 			responseMap["error"] = r.Err.Error()
 		}
+		r.Success = false
 	} else {
 		responseMap["body"] = r.Body
 		if r.Err != nil {
 			responseMap["error"] = r.Err.Error()
+			r.Success = false
 		}
 	}
 
