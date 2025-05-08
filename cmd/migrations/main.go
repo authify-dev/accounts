@@ -24,7 +24,7 @@ func main() {
 	settings.LoadEnvs()
 
 	// Define el DSN para la conexión a PostgreSQL
-	dsn := "postgres://postgres:secret@localhost:5441/unicon?sslmode=disable&TimeZone=UTC"
+	dsn := settings.Settings.POSTGRES_DSN
 
 	// Conecta a la base de datos Postgres
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
