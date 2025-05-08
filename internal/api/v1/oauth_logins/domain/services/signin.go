@@ -98,8 +98,9 @@ func (s *OAuthService) SignInGoogle(ctx context.Context, code, role string) util
 
 		// Generar oauth login
 		oauth_login := oauth_logins.OAuthLogin{
-			Platform: "google",
-			Email:    user_info_result.Data.Email,
+			Platform:   "google",
+			Email:      user_info_result.Data.Email,
+			ExternalID: uuid.New().String(),
 		}
 
 		// Crear usuario y email
