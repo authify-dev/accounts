@@ -26,7 +26,8 @@ func NewOAuthLoginPostgresRepository(connection *gorm.DB) *OAuthLoginPostgresRep
 	}
 }
 
-func (r *OAuthLoginPostgresRepository) Matching(criteria criteria.Criteria) ([]entities.OAuthLogin, error) {
+func (r *OAuthLoginPostgresRepository) Matching(cr criteria.Criteria) ([]entities.OAuthLogin, error) {
+	model := &OAuthLoginModel{}
 
-	return r.SearchAll()
+	return r.MatchingLow(cr, model)
 }
