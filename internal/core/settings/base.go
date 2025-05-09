@@ -50,6 +50,9 @@ type Config struct {
 	GOOGLE_OAUTH_CLIENT_ID     string `required:"true"`
 	GOOGLE_OAUTH_CLIENT_SECRET string `required:"true"`
 	GOOGLE_OAUTH_REDIRECT_URI  string `required:"true"`
+
+	// OAuth
+	OAUTH_REDIRECT_URL string `required:"true"`
 }
 
 var Settings Config
