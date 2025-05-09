@@ -65,5 +65,6 @@ func SetupOAuthModule(r *gin.Engine) {
 	oauths.POST("/token/google", cntr.TokenGoogle)
 	oauths.GET("/user-info/google", cntr.UserInfoGoogle)
 	oauths.POST("/signin/google", cntr.SignInGoogle)
+	oauths.POST("/redirect/google", cntr.SignInGoogle)
 
 }
