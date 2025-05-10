@@ -8,11 +8,20 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 func (c *EmailsController) SignUp(ctx *gin.Context) {
 
 	dto := requests.GetDTO[dtos.SignUpDTO](ctx)
+
+	if dto == nil {
+		return
+	}
+
+	if dto.UserName == "" {
+		dto.UserName = "User_" + uuid.New().String()
+	}
 
 	entity, err := entities.NewSingUpFromJSON(dto.ToJson())
 
