@@ -16,6 +16,7 @@ func (r *OAuthGoogleRepository) GetLink() utils.Result[string] {
 	params.Add("response_type", "code")
 	params.Add("scope", "email profile")
 	params.Add("access_type", "offline")
+	params.Add("prompt", "consent")
 
 	url := fmt.Sprintf("%s?%s", baseURL, params.Encode())
 
