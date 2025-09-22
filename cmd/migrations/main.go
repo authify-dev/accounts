@@ -6,6 +6,7 @@ import (
 	emails "accounts/internal/db/postgres/emails"
 	login_methods "accounts/internal/db/postgres/login_methods"
 	oauth_logins "accounts/internal/db/postgres/oauth_logins"
+	organizations_gorm "accounts/internal/db/postgres/organizations"
 	pending_registrations "accounts/internal/db/postgres/pending_registrations"
 	policies_pg "accounts/internal/db/postgres/policies"
 	refreshtokens "accounts/internal/db/postgres/refresh_tokens"
@@ -46,6 +47,7 @@ func main() {
 	db.AutoMigrate(&pending_registrations.PendingRegistrationModel{})
 	db.AutoMigrate(&policies_pg.PolicyModel{})
 	db.AutoMigrate(&role_policies_pg.RolePoliciesModel{})
+	db.AutoMigrate(&organizations_gorm.OrganizationModel{})
 
 	fmt.Println("Migrations completed")
 }
