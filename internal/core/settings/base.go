@@ -18,6 +18,7 @@ type Config struct {
 	APP_NAME    string `required:"false" default:"accounts"`
 	ROOT_PATH   string `required:"false" default:""`
 	COLORED_LOG bool   `required:"false" default:"true"`
+	UUID_MODULE string `required:"false" default:"01"`
 
 	// Database
 	POSTGRES_DSN string `required:"true"`
