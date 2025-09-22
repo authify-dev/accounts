@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"accounts/internal/api/v1/pending_registrations/domain/entities"
+	"accounts/internal/core/settings"
 	"accounts/internal/db/postgres"
 	postgres_codes "accounts/internal/db/postgres/codes"
 	"fmt"
@@ -33,7 +34,10 @@ type PendingRegistrationModel struct {
 }
 
 func (PendingRegistrationModel) TableName() string {
-	return "pending_registrations"
+	if settings.Settings.DB_SCHEMA == "" {
+		return "pending_registrations"
+	}
+	return settings.Settings.DB_SCHEMA + ".pending_registrations"
 }
 
 func (c PendingRegistrationModel) GetID() string {

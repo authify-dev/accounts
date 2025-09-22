@@ -2,6 +2,7 @@ package rolepolicies_pg
 
 import (
 	"accounts/internal/api/v1/role_policies/domain/entities"
+	"accounts/internal/core/settings"
 	"accounts/internal/db/postgres"
 	postgres_policies "accounts/internal/db/postgres/policies"
 	postgres_roles "accounts/internal/db/postgres/role"
@@ -28,7 +29,10 @@ type RolePoliciesModel struct {
 }
 
 func (RolePoliciesModel) TableName() string {
-	return "role_policies"
+	if settings.Settings.DB_SCHEMA == "" {
+		return "role_policies"
+	}
+	return settings.Settings.DB_SCHEMA + ".role_policies"
 }
 
 func (c RolePoliciesModel) GetID() string {

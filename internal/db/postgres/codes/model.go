@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"accounts/internal/api/v1/codes/domain/entities"
+	"accounts/internal/core/settings"
 	"accounts/internal/db/postgres"
 	postgres_users "accounts/internal/db/postgres/users"
 	"fmt"
@@ -30,7 +31,10 @@ type CodeModel struct {
 }
 
 func (CodeModel) TableName() string {
-	return "codes"
+	if settings.Settings.DB_SCHEMA == "" {
+		return "codes"
+	}
+	return settings.Settings.DB_SCHEMA + ".codes"
 }
 
 func (c CodeModel) GetID() string {

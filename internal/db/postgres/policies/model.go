@@ -33,7 +33,10 @@ type PolicyModel struct {
 
 // TableName especifica el nombre de la tabla en la base de datos.
 func (PolicyModel) TableName() string {
-	return "policies"
+	if settings.Settings.DB_SCHEMA == "" {
+		return "policies"
+	}
+	return settings.Settings.DB_SCHEMA + ".policies"
 }
 
 // GetID retorna el identificador único del modelo.

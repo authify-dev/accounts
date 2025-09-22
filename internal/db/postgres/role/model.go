@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"accounts/internal/api/v1/roles/domain/entities"
+	"accounts/internal/core/settings"
 	"accounts/internal/db/postgres"
 	"fmt"
 
@@ -23,7 +24,10 @@ type RoleModel struct {
 }
 
 func (RoleModel) TableName() string {
-	return "roles"
+	if settings.Settings.DB_SCHEMA == "" {
+		return "roles"
+	}
+	return settings.Settings.DB_SCHEMA + ".roles"
 }
 
 func (c RoleModel) GetID() string {

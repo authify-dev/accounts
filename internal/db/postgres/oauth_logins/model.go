@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"accounts/internal/api/v1/oauth_logins/domain/entities"
+	"accounts/internal/core/settings"
 	"accounts/internal/db/postgres"
 	postgres_users "accounts/internal/db/postgres/users"
 	"fmt"
@@ -31,7 +32,10 @@ type OAuthLoginModel struct {
 
 // TableName especifica el nombre de la tabla en la base de datos.
 func (OAuthLoginModel) TableName() string {
-	return "oauth_logins"
+	if settings.Settings.DB_SCHEMA == "" {
+		return "oauth_logins"
+	}
+	return settings.Settings.DB_SCHEMA + ".oauth_logins"
 }
 
 // GetID retorna el identificador único del modelo.

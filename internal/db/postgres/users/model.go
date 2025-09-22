@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"accounts/internal/api/v1/users/domain/entities"
+	"accounts/internal/core/settings"
 	"accounts/internal/db/postgres"
 	postgres_role "accounts/internal/db/postgres/role"
 	"fmt"
@@ -29,7 +30,10 @@ type UserModel struct {
 }
 
 func (UserModel) TableName() string {
-	return "users"
+	if settings.Settings.DB_SCHEMA == "" {
+		return "users"
+	}
+	return settings.Settings.DB_SCHEMA + ".users"
 }
 
 func (c UserModel) GetID() string {

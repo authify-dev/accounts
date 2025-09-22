@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"accounts/internal/api/v1/refresh_tokens/domain/entities"
+	"accounts/internal/core/settings"
 	"accounts/internal/db/postgres"
 	postgres_login_methods "accounts/internal/db/postgres/login_methods"
 	postgres_users "accounts/internal/db/postgres/users"
@@ -35,7 +36,10 @@ type RefreshTokenModel struct {
 }
 
 func (RefreshTokenModel) TableName() string {
-	return "refresh_tokens"
+	if settings.Settings.DB_SCHEMA == "" {
+		return "refresh_tokens"
+	}
+	return settings.Settings.DB_SCHEMA + ".refresh_tokens"
 }
 
 func (c RefreshTokenModel) GetID() string {

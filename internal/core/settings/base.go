@@ -19,6 +19,7 @@ type Config struct {
 	ROOT_PATH   string `required:"false" default:""`
 	COLORED_LOG bool   `required:"false" default:"true"`
 	UUID_MODULE string `required:"false" default:"01"`
+	DB_SCHEMA   string `required:"false" default:""`
 
 	// Database
 	POSTGRES_DSN string `required:"true"`

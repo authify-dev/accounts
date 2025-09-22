@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"accounts/internal/api/v1/login_methods/domain/entities"
+	"accounts/internal/core/settings"
 	"accounts/internal/db/postgres"
 	postgres_users "accounts/internal/db/postgres/users"
 	"fmt"
@@ -31,7 +32,10 @@ type LoginMethodModel struct {
 }
 
 func (LoginMethodModel) TableName() string {
-	return "login_methods"
+	if settings.Settings.DB_SCHEMA == "" {
+		return "login_methods"
+	}
+	return settings.Settings.DB_SCHEMA + ".login_methods"
 }
 
 func (c LoginMethodModel) GetID() string {

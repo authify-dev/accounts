@@ -24,7 +24,10 @@ type OrganizationModel struct {
 
 // TableName especifica el nombre de la tabla en la base de datos.
 func (OrganizationModel) TableName() string {
-	return "organizations"
+	if settings.Settings.DB_SCHEMA == "" {
+		return "organizations"
+	}
+	return settings.Settings.DB_SCHEMA + ".organizations"
 }
 
 // GetID retorna el identificador único del modelo.
