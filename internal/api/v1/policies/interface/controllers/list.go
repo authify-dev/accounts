@@ -9,7 +9,16 @@ import (
 
 func (c *PoliciesController) List(ctx *gin.Context) {
 
-	policies, err := c.policies_service.List(ctx.Request.Context())
+	organizationID := ctx.Query("organization_id")
+	if organizationID == "" {
+		ctx.JSON(fiber.StatusBadRequest, responses.Response{
+			Status: fiber.StatusBadRequest,
+			Errors: []string{"organization_id is required"},
+		})
+		return
+	}
+
+	policies, err := c.policies_service.List(ctx.Request.Context(), organizationID)
 	if err != nil {
 		ctx.JSON(fiber.StatusBadRequest, responses.Response{
 			Status: fiber.StatusBadRequest,
