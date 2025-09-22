@@ -11,17 +11,19 @@ import "accounts/internal/core/domain"
 // Role embebe a Entity, por lo que automáticamente implementa domain.IEntity.
 type Role struct {
 	domain.Entity
-	Name        string `json:"name"`
-	Description string `json:"description,omitempty"`
+	Name           string `json:"name"`
+	Description    string `json:"description,omitempty"`
+	OrganizationID string `json:"organization_id"`
 }
 
 func (r Role) ToJSON() map[string]interface{} {
 	return map[string]interface{}{
-		"id":          r.ID,
-		"name":        r.Name,
-		"description": r.Description,
-		"created_at":  r.CreatedAt,
-		"updated_at":  r.UpdatedAt,
-		"is_removed":  r.IsRemoved,
+		"id":              r.ID,
+		"name":            r.Name,
+		"description":     r.Description,
+		"created_at":      r.CreatedAt,
+		"organization_id": r.OrganizationID,
+		"updated_at":      r.UpdatedAt,
+		"is_removed":      r.IsRemoved,
 	}
 }

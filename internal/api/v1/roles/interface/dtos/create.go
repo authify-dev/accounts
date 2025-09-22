@@ -7,8 +7,9 @@ import (
 )
 
 type CreateRoleDTO struct {
-	Name        string `json:"name" validate:"required"`
-	Description string `json:"description"`
+	Name           string `json:"name" validate:"required"`
+	Description    string `json:"description"`
+	OrganizationID string `json:"organization_id" validate:"required"`
 }
 
 func (dto CreateRoleDTO) Validate() error {

@@ -15,8 +15,9 @@ func (c *RolesController) SignUp(ctx *gin.Context) {
 	dto := requests.GetDTO[dtos.CreateRoleDTO](ctx)
 
 	c.userService.Create(entities.Role{
-		Name:        dto.Name,
-		Description: dto.Description,
+		Name:           dto.Name,
+		Description:    dto.Description,
+		OrganizationID: dto.OrganizationID,
 	})
 
 	customResponse := responses.Response{

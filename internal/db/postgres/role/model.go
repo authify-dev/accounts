@@ -4,10 +4,14 @@ import (
 	"accounts/internal/api/v1/roles/domain/entities"
 	"accounts/internal/core/settings"
 	"accounts/internal/db/postgres"
-	"fmt"
+	organizations_gorm "accounts/internal/db/postgres/organizations"
+	"foundation/types/uuidx"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
+)
+
+const (
+	ENTITY_ROLE_CODE = "03"
 )
 
 // --------------------------------
@@ -19,8 +23,11 @@ import (
 // RoleModel utiliza Model parametrizado con Role.
 type RoleModel struct {
 	postgres.Model[entities.Role]
-	Name        string `gorm:"type:varchar(255);uniqueIndex;not null;" json:"name"`
-	Description string `gorm:"type:varchar(255);not null;" json:"description"`
+	Name           string `gorm:"type:varchar(255);uniqueIndex;not null;" json:"name"`
+	Description    string `gorm:"type:varchar(255);not null;" json:"description"`
+	OrganizationID string `gorm:"type:varchar(50);not null" json:"organization_id"`
+
+	Organization *organizations_gorm.OrganizationModel `gorm:"foreignKey:OrganizationID"`
 }
 
 func (RoleModel) TableName() string {
@@ -35,6 +42,10 @@ func (c RoleModel) GetID() string {
 }
 
 func (m *RoleModel) BeforeCreate(tx *gorm.DB) (err error) {
-	m.ID = fmt.Sprintf("%s_%s", m.TableName()[:3], uuid.New().String())
+	idx, err := uuidx.NewUUIDx(settings.Settings.UUID_MODULE, ENTITY_ROLE_CODE)
+	if err != nil {
+		return err
+	}
+	m.ID = idx.UUID().String()
 	return m.Model.BeforeCreate(tx)
 }
