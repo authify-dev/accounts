@@ -1,8 +1,9 @@
 module accounts
 
-go 1.23.4
+go 1.24.2
 
 require (
+	foundation v0.0.0-00010101000000-000000000000
 	github.com/gofiber/fiber/v2 v2.52.6
 	github.com/jackc/pgx/v5 v5.5.5
 	golang.org/x/crypto v0.36.0
@@ -12,7 +13,6 @@ require (
 	github.com/bytedance/sonic v1.13.2 // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect
-	github.com/cloudwego/iasm v0.2.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
 	github.com/gin-contrib/sse v1.0.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
@@ -61,7 +61,6 @@ require (
 	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/sirupsen/logrus v1.9.3
-	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.51.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
@@ -70,3 +69,5 @@ require (
 	gorm.io/driver/sqlite v1.5.7
 	gorm.io/gorm v1.25.12
 )
+
+replace foundation => ./foundation
