@@ -14,11 +14,12 @@ func (s *PoliciesService) Create(ctx context.Context, command commands.CreatePol
 	entry := logger.FromContext(ctx)
 
 	entity := entities.PolicyEntity{
-		Name:        command.Name,
-		Description: command.Description,
-		Resource:    command.Resource,
-		Action:      command.Action,
-		Effect:      string(command.Effect),
+		Name:           command.Name,
+		Description:    command.Description,
+		Resource:       command.Resource,
+		Action:         command.Action,
+		Effect:         string(command.Effect),
+		OrganizationID: command.OrganizationID,
 	}
 
 	res := s.policies_repository.SaveEntity(entity)

@@ -6,11 +6,12 @@ import (
 )
 
 type CreatePolicyDTO struct {
-	Name        string                      `json:"name" binding:"required"`
-	Description string                      `json:"description,omitempty"`
-	Resource    string                      `json:"resource" binding:"required"`
-	Action      string                      `json:"action" binding:"required"`
-	Effect      policies_enums.PolicyEffect `json:"effect" binding:"required"`
+	Name           string                      `json:"name" binding:"required"`
+	Description    string                      `json:"description,omitempty"`
+	Resource       string                      `json:"resource" binding:"required"`
+	Action         string                      `json:"action" binding:"required"`
+	Effect         policies_enums.PolicyEffect `json:"effect" binding:"required"`
+	OrganizationID string                      `json:"organization_id" binding:"required"`
 }
 
 func (dto CreatePolicyDTO) Validate() error {
@@ -19,10 +20,11 @@ func (dto CreatePolicyDTO) Validate() error {
 
 func (dto CreatePolicyDTO) ToCommand() commands.CreatePolicyCommand {
 	return commands.CreatePolicyCommand{
-		Name:        dto.Name,
-		Description: dto.Description,
-		Resource:    dto.Resource,
-		Action:      dto.Action,
-		Effect:      dto.Effect,
+		Name:           dto.Name,
+		Description:    dto.Description,
+		Resource:       dto.Resource,
+		Action:         dto.Action,
+		Effect:         dto.Effect,
+		OrganizationID: dto.OrganizationID,
 	}
 }

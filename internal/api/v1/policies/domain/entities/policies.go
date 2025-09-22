@@ -14,12 +14,12 @@ import (
 // Role embebe a Entity, por lo que automáticamente implementa domain.IEntity.
 type PolicyEntity struct {
 	domain.Entity
-	Name        string `json:"name"`
-	Description string `json:"description,omitempty"`
-	Resource    string `json:"resource"` // e.g. "user", "chat", "document"
-	Action      string `json:"action"`   // e.g. "create", "read", "update", "delete"
-	Effect      string `json:"effect"`   // "allow" | "deny"
-	// Opcional: condiciones o atributos adicionales si haces algo tipo ABAC
+	Name           string `json:"name"`
+	Description    string `json:"description,omitempty"`
+	Resource       string `json:"resource"` // e.g. "user", "chat", "document"
+	Action         string `json:"action"`   // e.g. "create", "read", "update", "delete"
+	Effect         string `json:"effect"`   // "allow" | "deny"
+	OrganizationID string `json:"organization_id"`
 }
 
 func (p PolicyEntity) ToJSON() map[string]interface{} {
