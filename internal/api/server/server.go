@@ -14,7 +14,6 @@ import (
 	"accounts/internal/api/v1/users"
 	"os"
 
-	"accounts/internal/common/middlewares"
 	"accounts/internal/core/settings"
 	"fmt"
 
@@ -45,9 +44,9 @@ func setUpRouter() *gin.Engine {
 
 	app := router.NewRouter()
 
-	app.Use(middlewares.TraceMiddleware())
-	//app.Use(middlewares.CatcherMiddleware)
-	app.Use(middlewares.LoggerMiddleware())
+	// app.Use(middlewares.TraceMiddleware())
+	// //app.Use(middlewares.CatcherMiddleware)
+	// app.Use(middlewares.LoggerMiddleware())
 
 	db, err := gorm.Open(postgres.Open(settings.Settings.POSTGRES_DSN), &gorm.Config{})
 	if err != nil {

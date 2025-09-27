@@ -34,7 +34,7 @@ func (r Response[R]) ToMapWithCustomContext(ctx *customctx.CustomContext) map[st
 		return r.ToMap()
 	}
 
-	fields := GetFieldsOfLogger(ctx.Context())
+	fields := ctx.Context().Value("fields").(logger.LogFields)
 
 	r.TraceID = fields.TraceID
 

@@ -1,8 +1,8 @@
 package middlewares
 
 import (
-	"accounts/internal/common/logger"
 	"context"
+	"foundation/domain/logger"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,19 +13,24 @@ func LoggerMiddleware() gin.HandlerFunc {
 		traceID := c.GetString("trace-id")
 		callerID := c.GetString("caller-id")
 
+		fields := logger.LogFields{
+			TraceID:  traceID,
+			CallerID: callerID,
+			Path:     c.Request.URL.Path,
+			Method:   c.Request.Method,
+			ClientIP: c.ClientIP(),
+			UserID:   c.GetString("user_id"),
+		}
+
 		// Crear un logger contextualizado con información relevante.
-		reqLogger := logger.WithFields(map[string]interface{}{
-			"trace_id":  traceID,
-			"caller_id": callerID,
-			"path":      c.Request.URL.Path,
-			"method":    c.Request.Method,
-		})
+		reqLogger := logger.WithFields(fields)
 
 		// Loguear el inicio de la petición.
 		reqLogger.Info("Inicio de petición API REST")
 
 		// Agregar el logger al contexto de la request HTTP.
 		ctx := context.WithValue(c.Request.Context(), "logger", reqLogger)
+		ctx = context.WithValue(ctx, "fields", fields)
 		c.Request = c.Request.WithContext(ctx)
 
 		// Continuar con el siguiente middleware o handler.

@@ -82,7 +82,10 @@ func WithLogger(ctx context.Context, entry *logrus.Entry) context.Context {
 
 // FromContext obtiene el logger desde el contexto; si no hay, devuelve el logger global.
 func FromContext(ctx context.Context) *logrus.Entry {
-	if entry, ok := ctx.Value(loggerKey).(*logrus.Entry); ok {
+
+	entry, ok := ctx.Value("logger").(*logrus.Entry)
+
+	if ok {
 		return entry
 	}
 	return globalLogger.WithFields(logrus.Fields{})
