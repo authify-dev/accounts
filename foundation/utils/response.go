@@ -50,6 +50,10 @@ func (r Response[R]) ToMapWithCustomContext(ctx *customctx.CustomContext) map[st
 
 	}
 
+	if len(r.Results) > 0 {
+		delete(res, "data")
+	}
+
 	return res
 }
 

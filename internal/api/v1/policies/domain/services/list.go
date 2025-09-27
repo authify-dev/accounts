@@ -2,11 +2,14 @@ package services
 
 import (
 	"accounts/internal/api/v1/policies/domain/entities"
-	"context"
 	"foundation/domain/criteria"
+	"foundation/domain/customctx"
+	"foundation/utils"
+	"foundation/utils/cerrs"
+	"net/http"
 )
 
-func (s *PoliciesService) List(ctx context.Context, organizationID string) ([]entities.PolicyEntity, error) {
+func (s *PoliciesService) List(cc *customctx.CustomContext, organizationID string) utils.Response[entities.PolicyEntity] {
 
 	cri := criteria.Criteria{
 		Filters: *criteria.NewFilters(
@@ -20,5 +23,19 @@ func (s *PoliciesService) List(ctx context.Context, organizationID string) ([]en
 		),
 	}
 
-	return s.policies_repository.Matching(cri)
+	res, err := s.policies_repository.Matching(cri)
+
+	if err != nil {
+		return utils.Response[entities.PolicyEntity]{
+			Error:      cc.NewError(cerrs.NewCustomError(http.StatusInternalServerError, "Error listing policies: "+err.Error(), "policies.list.error_listing_policies")),
+			StatusCode: http.StatusInternalServerError,
+			Success:    false,
+		}
+	}
+
+	return utils.Response[entities.PolicyEntity]{
+		Results:    res,
+		Success:    true,
+		StatusCode: http.StatusOK,
+	}
 }

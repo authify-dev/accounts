@@ -1,13 +1,21 @@
 package controllers
 
 import (
+	"accounts/internal/common/logger"
 	"accounts/internal/common/responses"
+	"foundation/domain/customctx"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gofiber/fiber/v2"
 )
 
 func (c *PoliciesController) List(ctx *gin.Context) {
+
+	cc := customctx.NewCustomContext(ctx.Request.Context())
+
+	entry := logger.FromContext(cc.Context())
+
+	entry.Info("Listing policies")
 
 	organizationID := ctx.Query("organization_id")
 	if organizationID == "" {
@@ -18,20 +26,11 @@ func (c *PoliciesController) List(ctx *gin.Context) {
 		return
 	}
 
-	policies, err := c.policies_service.List(ctx.Request.Context(), organizationID)
-	if err != nil {
-		ctx.JSON(fiber.StatusBadRequest, responses.Response{
-			Status: fiber.StatusBadRequest,
-			Errors: []string{err.Error()},
-		})
+	policies := c.policies_service.List(cc, organizationID)
+	if policies.Error != nil {
+		ctx.JSON(policies.StatusCode, policies.ToMapWithCustomContext(cc))
 		return
 	}
 
-	customResponse := responses.Response{
-		Status: fiber.StatusOK,
-		Data:   policies,
-	}
-
-	// Se almacena el objeto para que el middleware lo procese
-	ctx.JSON(fiber.StatusOK, customResponse)
+	ctx.JSON(policies.StatusCode, policies.ToMapWithCustomContext(cc))
 }
