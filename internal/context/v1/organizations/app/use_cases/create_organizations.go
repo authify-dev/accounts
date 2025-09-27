@@ -3,8 +3,9 @@ package organizations_use_cases
 import (
 	"accounts/internal/api/v1/organizations/domain/entities"
 	organizations_gorm "accounts/internal/db/postgres/organinizations"
-	"accounts/internal/utils"
-	"context"
+	"foundation/domain/customctx"
+	"foundation/utils"
+	"net/http"
 )
 
 type CreateOrganizationsUseCase struct {
@@ -15,7 +16,7 @@ func NewCreateOrganizationsUseCase(repository *organizations_gorm.OrganizationsP
 	return &CreateOrganizationsUseCase{repository: repository}
 }
 
-func (u *CreateOrganizationsUseCase) Execute(ctx context.Context) utils.Responses[entities.Organization] {
+func (u *CreateOrganizationsUseCase) Execute(cc *customctx.CustomContext) utils.Response[entities.Organization] {
 
 	organization := entities.Organization{
 		Name:       "Organization 1",
@@ -24,8 +25,10 @@ func (u *CreateOrganizationsUseCase) Execute(ctx context.Context) utils.Response
 
 	res := u.repository.Save(organization)
 
-	return utils.Responses[entities.Organization]{
-		Body: res.Data,
+	return utils.Response[entities.Organization]{
+		Data:       res.Data,
+		Success:    true,
+		StatusCode: http.StatusCreated,
 	}
 
 }
