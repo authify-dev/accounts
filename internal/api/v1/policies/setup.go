@@ -30,6 +30,8 @@ func SetupPoliciesModule(r *gin.Engine, db *gorm.DB) {
 
 	policies_route := r.Group(settings.Settings.ROOT_PATH + "/api/v1/policies")
 
-	policies_route.POST("", middlewares.APIKeyAuthMiddleware(*usecases.NewValidateAPIKeyUseCase(api_keys_repository)), policies_controller.Create)
+	policies_route.Use(middlewares.APIKeyAuthMiddleware(*usecases.NewValidateAPIKeyUseCase(api_keys_repository)))
+
+	policies_route.POST("", policies_controller.Create)
 	policies_route.GET("", policies_controller.List)
 }

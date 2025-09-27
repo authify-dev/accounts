@@ -42,7 +42,7 @@ func (u *ValidateAPIKeyUseCase) Validate(cc *customctx.CustomContext, apiKey str
 		return utils.Response[entities.APIKeyEntity]{
 			Success:    false,
 			StatusCode: http.StatusInternalServerError,
-			Error:      cerrs.NewCustomError(http.StatusInternalServerError, err.Error(), "error_getting_api_key"),
+			Error:      cc.NewError(cerrs.NewCustomError(http.StatusInternalServerError, err.Error(), "error_getting_api_key")),
 		}
 	}
 
@@ -50,7 +50,7 @@ func (u *ValidateAPIKeyUseCase) Validate(cc *customctx.CustomContext, apiKey str
 		return utils.Response[entities.APIKeyEntity]{
 			Success:    false,
 			StatusCode: http.StatusUnauthorized,
-			Error:      cerrs.NewCustomError(http.StatusUnauthorized, "API key not found", "api_key_not_found"),
+			Error:      cc.NewError(cerrs.NewCustomError(http.StatusUnauthorized, "API key not found", "api_key_not_found")),
 		}
 	}
 

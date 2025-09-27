@@ -17,8 +17,8 @@ func (c *PoliciesController) List(ctx *gin.Context) {
 
 	entry.Info("Listing policies")
 
-	organizationID := ctx.Query("organization_id")
-	if organizationID == "" {
+	organizationID, ok := ctx.Get("organization_id")
+	if !ok {
 		ctx.JSON(fiber.StatusBadRequest, responses.Response{
 			Status: fiber.StatusBadRequest,
 			Errors: []string{"organization_id is required"},
@@ -26,7 +26,7 @@ func (c *PoliciesController) List(ctx *gin.Context) {
 		return
 	}
 
-	policies := c.policies_service.List(cc, organizationID)
+	policies := c.policies_service.List(cc, organizationID.(string))
 	if policies.Error != nil {
 		ctx.JSON(policies.StatusCode, policies.ToMapWithCustomContext(cc))
 		return
