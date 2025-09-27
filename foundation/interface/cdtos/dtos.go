@@ -1,4 +1,4 @@
-package ppdtos
+package cdtos
 
 import (
 	"foundation/domain/customctx"
