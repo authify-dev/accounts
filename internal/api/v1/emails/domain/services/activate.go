@@ -1,14 +1,15 @@
 package services
 
 import (
+	"accounts/internal/api/v1/emails/domain/commands"
 	"accounts/internal/api/v1/emails/domain/entities"
 	email_events "accounts/internal/api/v1/emails/domain/events"
 	"accounts/internal/common/logger"
 	"accounts/internal/core/domain"
 	"accounts/internal/core/domain/event"
 	"context"
-	"fmt"
 	"foundation/domain/criteria"
+	"foundation/domain/customctx"
 	"foundation/utils"
 	"foundation/utils/cerrs"
 	"log"
@@ -22,8 +23,8 @@ import (
 )
 
 func (s *EmailsService) Activate(
-	ctx context.Context,
-	entity entities.Activate,
+	cc *customctx.CustomContext,
+	command commands.ActivateCommand,
 ) utils.Response[entities.ActivateResponse] {
 
 	criteria_email := criteria.Criteria{
@@ -31,7 +32,12 @@ func (s *EmailsService) Activate(
 			[]criteria.Filter{
 				{
 					Field:    "email",
-					Value:    entity.Email,
+					Value:    command.Email,
+					Operator: criteria.OperatorEqual,
+				},
+				{
+					Field:    "organization_id",
+					Value:    command.OrganizationID,
 					Operator: criteria.OperatorEqual,
 				},
 			},
@@ -67,6 +73,11 @@ func (s *EmailsService) Activate(
 					Value:    "email",
 					Operator: criteria.OperatorEqual,
 				},
+				{
+					Field:    "organization_id",
+					Value:    command.OrganizationID,
+					Operator: criteria.OperatorEqual,
+				},
 			},
 		),
 	}
@@ -87,7 +98,6 @@ func (s *EmailsService) Activate(
 	}
 
 	login := logins[0]
-	fmt.Println(login)
 
 	criteria_code := criteria.Criteria{
 		Filters: *criteria.NewFilters(
@@ -106,6 +116,11 @@ func (s *EmailsService) Activate(
 					Field:    "created_at",
 					Value:    time.Now().Add(-time.Minute * 15),
 					Operator: criteria.OperatorGreaterThan,
+				},
+				{
+					Field:    "organization_id",
+					Value:    command.OrganizationID,
+					Operator: criteria.OperatorEqual,
 				},
 			},
 		),
@@ -128,7 +143,7 @@ func (s *EmailsService) Activate(
 
 	code := codes[0]
 
-	if code.Code != entity.Code {
+	if code.Code != command.Code {
 		return utils.Response[entities.ActivateResponse]{
 			Error:      cerrs.NewCustomError(http.StatusBadRequest, "invalid code", "emails.activate.error_invalid_code"),
 			StatusCode: 400,
@@ -139,7 +154,7 @@ func (s *EmailsService) Activate(
 		"is_verify": true,
 	})
 
-	refreshs_result := s.createRefreshToken(ctx, login)
+	refreshs_result := s.createRefreshToken(cc.Context(), login)
 
 	if refreshs_result.Err != nil {
 		return utils.Response[entities.ActivateResponse]{
@@ -152,7 +167,7 @@ func (s *EmailsService) Activate(
 		"is_removed": true,
 	})
 
-	result := s.generateTokens(ctx, login, refreshs_result.Data)
+	result := s.generateTokens(cc.Context(), login, refreshs_result.Data)
 
 	if result.Err != nil {
 		return utils.Response[entities.ActivateResponse]{
@@ -161,7 +176,7 @@ func (s *EmailsService) Activate(
 		}
 	}
 
-	s.publishActivationUserEvent(entity.Email, entity.Email)
+	s.publishActivationUserEvent(command.Email, command.Email)
 
 	return utils.Response[entities.ActivateResponse]{
 		StatusCode: 200,
@@ -191,10 +206,11 @@ func (s EmailsService) createRefreshToken(ctx context.Context, login logins.Logi
 	external_id := uuid.New()
 
 	entity := refreshs.RefreshToken{
-		UserID:        login.UserID,
-		Entity:        domain.Entity{},
-		LoginMethodID: login.ID.String(),
-		ExternalID:    external_id.String(),
+		UserID:         login.UserID,
+		Entity:         domain.Entity{},
+		LoginMethodID:  login.ID.String(),
+		ExternalID:     external_id.String(),
+		OrganizationID: login.OrganizationID,
 	}
 
 	result := s.refresh_repository.Save(entity)

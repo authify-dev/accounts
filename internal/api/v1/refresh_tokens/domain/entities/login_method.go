@@ -19,11 +19,12 @@ import (
 // Refreshs embebe a Entity, por lo que automáticamente implementa domain.IEntity.
 type RefreshToken struct {
 	domain.Entity
-	UserID        string    `json:"user_id,omitempty"`
-	LoginMethodID string    `json:"login_method_id,omitempty"`
-	ExternalID    string    `json:"external_id,omitempty"`
-	ExpiresAt     time.Time `json:"expires_at,omitempty"`
-	RemoveAt      time.Time `json:"remove_at,omitempty"`
+	OrganizationID string    `json:"organization_id,omitempty"`
+	UserID         string    `json:"user_id,omitempty"`
+	LoginMethodID  string    `json:"login_method_id,omitempty"`
+	ExternalID     string    `json:"external_id,omitempty"`
+	ExpiresAt      time.Time `json:"expires_at,omitempty"`
+	RemoveAt       time.Time `json:"remove_at,omitempty"`
 }
 
 func (r RefreshToken) ToJSON() map[string]interface{} {
@@ -53,6 +54,7 @@ func (r RefreshToken) ToJWT(ctx context.Context, jwt_controller jwt_controller.J
 	delete(refresh_map, "created_at")
 	delete(refresh_map, "user_id")
 	delete(refresh_map, "login_method_id")
+	delete(refresh_map, "organization_id")
 
 	jwt, err := jwt_controller.GenerateToken(ctx, refresh_map, settings.Settings.REFRESH_EXPIRE)
 	if err != nil {

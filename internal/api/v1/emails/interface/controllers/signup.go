@@ -7,6 +7,7 @@ import (
 	"accounts/internal/common/responses"
 	"foundation/domain/customctx"
 	"foundation/interface/cdtos"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gofiber/fiber/v2"
@@ -24,13 +25,19 @@ func (c *EmailsController) SignUp(ctx *gin.Context) {
 		return
 	}
 
-	organizationID := ctx.Param("organization_id")
+	organizationID, ok := ctx.Get("organization_id")
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Organization ID not found",
+		})
+		return
+	}
 
 	if dto.Data.UserName == "" {
 		dto.Data.UserName = "User_" + uuid.New().String()
 	}
 
-	dto.Data.OrganizationID = organizationID
+	dto.Data.OrganizationID = organizationID.(string)
 
 	entity, err := entities.NewSingUpFromJSON(dto.Data.ToJson())
 

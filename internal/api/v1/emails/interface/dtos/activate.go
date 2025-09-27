@@ -1,6 +1,7 @@
 package dtos
 
 import (
+	"accounts/internal/api/v1/emails/domain/commands"
 	"encoding/json"
 )
 
@@ -21,4 +22,11 @@ func (dto ActivateDTO) ToJson() []byte {
 	}
 
 	return data
+}
+
+func (dto ActivateDTO) ToCommand() commands.ActivateCommand {
+	return commands.ActivateCommand{
+		Email:          dto.Email,
+		Code:           dto.Code,
+	}
 }

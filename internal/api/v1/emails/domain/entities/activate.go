@@ -3,8 +3,9 @@ package entities
 import "encoding/json"
 
 type Activate struct {
-	Email string `json:"email"`
-	Code  string `json:"code"`
+	Email          string `json:"email"`
+	Code           string `json:"code"`
+	OrganizationID string `json:"organization_id"`
 }
 
 func NewActivateFromJSON(jsonData []byte) (Activate, error) {
