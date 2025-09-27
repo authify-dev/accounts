@@ -3,6 +3,7 @@ package postgres
 import (
 	"accounts/internal/api/v1/oauth_logins/domain/entities"
 	"accounts/internal/core/settings"
+	postgres_organizations "accounts/internal/db/postgres/organinizations"
 	postgres_users "accounts/internal/db/postgres/users"
 	"foundation/infrastructure/db/cgorm"
 	"foundation/utils"
@@ -29,7 +30,10 @@ type OAuthLoginModel struct {
 	// Platform indica la plataforma del login OAuth (por ejemplo, Google, Facebook, etc.).
 	Platform string `gorm:"type:varchar(255);not null" json:"platform,omitempty"`
 
-	UserModel postgres_users.UserModel `gorm:"foreignKey:UserID;references:ID" json:"user"`
+	UserModel         postgres_users.UserModel                 `gorm:"foreignKey:UserID;references:ID" json:"user"`
+	OrganizationModel postgres_organizations.OrganizationModel `gorm:"foreignKey:OrganizationID;references:ID" json:"organization"`
+
+	OrganizationID string `gorm:"type:uuid;not null" json:"organization_id"`
 
 	Email string `gorm:"type:varchar(255)" json:"email,omitempty"`
 }

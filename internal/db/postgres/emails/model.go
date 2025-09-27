@@ -3,6 +3,7 @@ package postgres
 import (
 	"accounts/internal/api/v1/oauth_logins/domain/entities"
 	"accounts/internal/core/settings"
+	postgres_organizations "accounts/internal/db/postgres/organinizations"
 	postgres_users "accounts/internal/db/postgres/users"
 	"foundation/infrastructure/db/cgorm"
 	"foundation/utils"
@@ -24,13 +25,16 @@ type EmailModel struct {
 	UserID string `gorm:"type:varchar(50);not null" json:"user_id,omitempty"`
 
 	// ExternalID representa el identificador externo de la entidad.
-	Email string `gorm:"type:varchar(255);uniqueIndex;not null" json:"email,omitempty"`
+	Email string `gorm:"type:varchar(255);uniqueIndex:idx_emails_org_email,priority:2;not null" json:"email,omitempty"`
 
 	// Platform indica la plataforma del login OAuth (por ejemplo, Google, Facebook, etc.).
 	Password string `gorm:"type:varchar(255);not null" json:"password,omitempty"`
 
 	// User es el usuario asociado al login OAuth.
 	UserModel postgres_users.UserModel `gorm:"foreignKey:UserID;references:ID" json:"user"`
+
+	OrganizationID    string                                   `gorm:"type:uuid;not null;uniqueIndex:idx_emails_org_email,priority:1" json:"organization_id"`
+	OrganizationModel postgres_organizations.OrganizationModel `gorm:"foreignKey:OrganizationID;references:ID" json:"organization"`
 }
 
 // TableName especifica el nombre de la tabla en la base de datos.

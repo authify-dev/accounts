@@ -3,6 +3,7 @@ package postgres
 import (
 	"accounts/internal/api/v1/login_methods/domain/entities"
 	"accounts/internal/core/settings"
+	postgres_organizations "accounts/internal/db/postgres/organinizations"
 	postgres_users "accounts/internal/db/postgres/users"
 	"foundation/infrastructure/db/cgorm"
 	"foundation/utils"
@@ -30,9 +31,12 @@ type LoginMethodModel struct {
 	IsActive   bool   `gorm:"type:boolean;not null" json:"is_active"`
 	IsVerify   bool   `gorm:"type:boolean;not null" json:"is_verify"`
 
+	OrganizationID string `gorm:"type:uuid;not null" json:"organization_id"`
+
 	// La etiqueta foreignKey indica cuál es el campo en este modelo que es llave foránea,
 	// y references indica a qué campo del modelo relacionado hace referencia.
-	UserModel postgres_users.UserModel `gorm:"foreignKey:UserID;references:ID" json:"user"`
+	UserModel         postgres_users.UserModel                 `gorm:"foreignKey:UserID;references:ID" json:"user"`
+	OrganizationModel postgres_organizations.OrganizationModel `gorm:"foreignKey:OrganizationID;references:ID" json:"organization"`
 }
 
 func (LoginMethodModel) TableName() string {

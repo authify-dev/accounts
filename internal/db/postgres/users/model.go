@@ -3,6 +3,7 @@ package postgres
 import (
 	"accounts/internal/api/v1/users/domain/entities"
 	"accounts/internal/core/settings"
+	postgres_organizations "accounts/internal/db/postgres/organinizations"
 	postgres_role "accounts/internal/db/postgres/role"
 	"foundation/infrastructure/db/cgorm"
 	"foundation/utils"
@@ -24,13 +25,15 @@ const (
 // UserModel utiliza Model parametrizado con User.
 type UserModel struct {
 	cgorm.Model[entities.User]
-	UserName string `gorm:"type:varchar(255);uniqueIndex;not null;" json:"user_name"`
+	UserName string `gorm:"type:varchar(255);uniqueIndex:idx_users_org_user_name,priority:2;not null;" json:"user_name"`
 	Name     string `gorm:"type:varchar(255);" json:"name"`
 
-	RoleID string `gorm:"type:varchar(50);not null" json:"role_id"`
+	RoleID         string `gorm:"type:varchar(50);not null" json:"role_id"`
+	OrganizationID string `gorm:"type:uuid;not null;uniqueIndex:idx_users_org_user_name,priority:1" json:"organization_id"`
 	// La etiqueta foreignKey indica cuál es el campo en este modelo que es llave foránea,
 	// y references indica a qué campo del modelo relacionado hace referencia.
-	RoleModel postgres_role.RoleModel `gorm:"foreignKey:RoleID;references:ID" json:"company"`
+	RoleModel         postgres_role.RoleModel                  `gorm:"foreignKey:RoleID;references:ID" json:"role"`
+	OrganizationModel postgres_organizations.OrganizationModel `gorm:"foreignKey:OrganizationID;references:ID" json:"organization"`
 }
 
 func (UserModel) TableName() string {
