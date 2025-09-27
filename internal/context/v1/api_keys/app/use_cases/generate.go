@@ -5,6 +5,7 @@ import (
 	"accounts/internal/common/logger"
 	"accounts/internal/context/v1/api_keys/domain/commands"
 	"accounts/internal/context/v1/api_keys/domain/entities"
+	"accounts/internal/context/v1/api_keys/domain/repositories"
 	"foundation/domain/customctx"
 	"foundation/utils"
 	"foundation/utils/cerrs"
@@ -12,11 +13,18 @@ import (
 )
 
 type GenerateAPIKeysUseCase struct {
-	generatorAPIKey *controllers.GeneratorAPIKey
+	generatorAPIKey  *controllers.GeneratorAPIKey
+	apiKeyRepository repositories.APIKeyRepository
 }
 
-func NewGenerateAPIKeysUseCase(generatorAPIKey *controllers.GeneratorAPIKey) *GenerateAPIKeysUseCase {
-	return &GenerateAPIKeysUseCase{generatorAPIKey: generatorAPIKey}
+func NewGenerateAPIKeysUseCase(
+	generatorAPIKey *controllers.GeneratorAPIKey,
+	apiKeyRepository repositories.APIKeyRepository,
+) *GenerateAPIKeysUseCase {
+	return &GenerateAPIKeysUseCase{
+		generatorAPIKey:  generatorAPIKey,
+		apiKeyRepository: apiKeyRepository,
+	}
 }
 
 func (u *GenerateAPIKeysUseCase) Generate(cc *customctx.CustomContext, command commands.GenerateAPIKeysCommand) utils.Response[entities.APIKeyEntity] {
@@ -42,8 +50,23 @@ func (u *GenerateAPIKeysUseCase) Generate(cc *customctx.CustomContext, command c
 	apiKeyEntity := command.ToEntity()
 	apiKeyEntity.Key = apiKey
 
+	result := u.apiKeyRepository.Save(apiKeyEntity)
+	if result.Err != nil {
+		return utils.Response[entities.APIKeyEntity]{
+			Success:    false,
+			StatusCode: http.StatusInternalServerError,
+			Error: cc.NewError(
+				cerrs.NewCustomError(
+					http.StatusInternalServerError,
+					"Error saving API key"+result.Err.Error(),
+					"save_api_key_error",
+				),
+			),
+		}
+	}
+
 	return utils.Response[entities.APIKeyEntity]{
-		Data:       apiKeyEntity,
+		Data:       result.Data,
 		Success:    true,
 		StatusCode: http.StatusCreated,
 	}
