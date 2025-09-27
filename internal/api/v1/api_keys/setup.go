@@ -31,13 +31,24 @@ func SetupAPIKeysModule(router *gin.Engine, db *gorm.DB) {
 
 	api_keys_route := router.Group(settings.Settings.ROOT_PATH + "/api/v1/api-keys")
 	api_keys_route.POST("/generate", generator_api_keys_controller.Handle)
-	api_keys_route.GET("/validate-secret", middlewares.APIKeySecretAuthMiddleware(*usecases.NewValidateSecretAPIKeyUseCase(apiKeyRepository, verifier)), simpleTest)
+	api_keys_route.GET("/validate-secret", middlewares.APIKeySecretAuthMiddleware(*usecases.NewValidateSecretAPIKeyUseCase(apiKeyRepository, verifier)), sampleSecretAuth)
+	api_keys_route.GET("/validate-public", middlewares.APIKeyPublicAuthMiddleware(*usecases.NewValidatePublicAPIKeyUseCase(apiKeyRepository)), samplePublicAuth)
 }
 
-func simpleTest(ctx *gin.Context) {
+func sampleSecretAuth(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"data": gin.H{
 			"message": "The secret key is valid",
+		},
+		"success": true,
+		"status":  http.StatusOK,
+	})
+}
+
+func samplePublicAuth(ctx *gin.Context) {
+	ctx.JSON(http.StatusOK, gin.H{
+		"data": gin.H{
+			"message": "The public key is valid",
 		},
 		"success": true,
 		"status":  http.StatusOK,

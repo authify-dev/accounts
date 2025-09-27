@@ -9,6 +9,7 @@ import (
 	"foundation/utils"
 	"foundation/utils/cerrs"
 	"net/http"
+	"strings"
 )
 
 type ValidatePublicAPIKeyUseCase struct {
@@ -28,7 +29,7 @@ func (u *ValidatePublicAPIKeyUseCase) Validate(cc *customctx.CustomContext, secr
 	entry := logger.FromContext(cc.Context())
 	entry.Info("Validating Secret API key")
 
-	parsed, perr := ParseSecretKey(secretKey)
+	parsed, perr := ParsePublicAPIKey(secretKey)
 	if perr != nil {
 		return utils.Response[entities.APIKeyEntity]{
 			Success:    false,
@@ -83,4 +84,23 @@ func (u *ValidatePublicAPIKeyUseCase) Validate(cc *customctx.CustomContext, secr
 		StatusCode: http.StatusOK,
 		Data:       ak,
 	}
+}
+
+type ParsedPublicAPIKey struct {
+	Env   string // "live" | "test" (o lo que uses)
+	KeyID string // hex (o base64url) que metes en la key
+	Raw   string // tramo aleatorio (base64url)
+}
+
+// Espera formato: sk_<env>_<keyid>_<randomBase64Url>
+func ParsePublicAPIKey(sk string) (ParsedPublicAPIKey, error) {
+	parts := strings.SplitN(sk, "_", 4)
+	if len(parts) != 4 || parts[0] != "pk" {
+		return ParsedPublicAPIKey{}, cerrs.NewCustomError(http.StatusUnauthorized, "Invalid API key format", "api_key_invalid_format")
+	}
+	return ParsedPublicAPIKey{
+		Env:   parts[1],
+		KeyID: parts[2],
+		Raw:   parts[3],
+	}, nil
 }

@@ -4,13 +4,16 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
+	"accounts/internal/api/middlewares"
 	"accounts/internal/api/v1/emails/domain/services"
 	"accounts/internal/api/v1/emails/interface/controllers"
 	utils_controller "accounts/internal/common/controllers"
+	usecases "accounts/internal/context/v1/api_keys/app/use_cases"
 	"accounts/internal/core/domain/event"
 	"accounts/internal/core/infrastructure/event_bus/local"
 	"accounts/internal/core/infrastructure/event_bus/rabbit"
 	"accounts/internal/core/settings"
+	api_keys_pg "accounts/internal/db/postgres/api_keys"
 	codes "accounts/internal/db/postgres/codes"
 	emails "accounts/internal/db/postgres/emails"
 	login_methods "accounts/internal/db/postgres/login_methods"
@@ -21,6 +24,8 @@ import (
 )
 
 func SetupEmailsModule(app *gin.Engine, db *gorm.DB) {
+
+	api_keys_repository := api_keys_pg.NewAPIKeyPostgresRepository(db)
 
 	service := services.NewEmailsService(
 		emails.NewEmailPostgresRepository(db),
@@ -41,7 +46,9 @@ func SetupEmailsModule(app *gin.Engine, db *gorm.DB) {
 	controller := controllers.NewEmailsController(*service)
 
 	// Rutas de users
-	group := app.Group(settings.Settings.ROOT_PATH + "/:organization_id/api/v1/emails")
+	group := app.Group(settings.Settings.ROOT_PATH + "/api/v1/emails")
+
+	group.Use(middlewares.APIKeyPublicAuthMiddleware(*usecases.NewValidatePublicAPIKeyUseCase(api_keys_repository)))
 
 	group.POST("/signup", controller.SignUp)
 	group.POST("/signup/resend-code", controller.SignUpResendCode)
