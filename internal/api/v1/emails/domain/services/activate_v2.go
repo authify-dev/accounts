@@ -3,12 +3,14 @@ package services
 import (
 	"accounts/internal/api/v1/emails/domain/entities"
 	"accounts/internal/common/logger"
-	"accounts/internal/core/domain/criteria"
-	"accounts/internal/utils"
 	"context"
+	"foundation/domain/criteria"
+	"foundation/utils"
+	"foundation/utils/cerrs"
+	"net/http"
 )
 
-func (s EmailsService) ActivateV2(ctx context.Context, entity entities.Activate) utils.Responses[entities.ActivateV2Response] {
+func (s EmailsService) ActivateV2(ctx context.Context, entity entities.Activate) utils.Response[entities.ActivateV2Response] {
 
 	entry := logger.FromContext(ctx)
 
@@ -30,18 +32,16 @@ func (s EmailsService) ActivateV2(ctx context.Context, entity entities.Activate)
 
 	pending_registrations, err := s.pending_registrations_repository.Matching(criteria_email)
 	if err != nil {
-		return utils.Responses[entities.ActivateV2Response]{
+		return utils.Response[entities.ActivateV2Response]{
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error getting email", "emails.activate_v2.error_getting_email"),
 			StatusCode: 500,
-			Errors:     []string{err.Error()},
-			Success:    false,
 		}
 	}
 
 	if len(pending_registrations) == 0 {
-		return utils.Responses[entities.ActivateV2Response]{
+		return utils.Response[entities.ActivateV2Response]{
+			Error:      cerrs.NewCustomError(http.StatusNotFound, "pending registration not found", "emails.activate_v2.error_pending_registration_not_found"),
 			StatusCode: 404,
-			Errors:     []string{"pending registration not found"},
-			Success:    false,
 		}
 	}
 
@@ -63,18 +63,16 @@ func (s EmailsService) ActivateV2(ctx context.Context, entity entities.Activate)
 
 	codes, err := s.codes_repository.Matching(criteria_code)
 	if err != nil {
-		return utils.Responses[entities.ActivateV2Response]{
+		return utils.Response[entities.ActivateV2Response]{
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error getting codes", "emails.activate_v2.error_getting_codes"),
 			StatusCode: 500,
-			Errors:     []string{err.Error()},
-			Success:    false,
 		}
 	}
 
 	if len(codes) == 0 {
-		return utils.Responses[entities.ActivateV2Response]{
+		return utils.Response[entities.ActivateV2Response]{
+			Error:      cerrs.NewCustomError(http.StatusNotFound, "code not found", "emails.activate_v2.error_code_not_found"),
 			StatusCode: 404,
-			Errors:     []string{"code not found"},
-			Success:    false,
 		}
 	}
 
@@ -82,10 +80,9 @@ func (s EmailsService) ActivateV2(ctx context.Context, entity entities.Activate)
 
 	// verificamos que sean iguales
 	if code.Code != entity.Code {
-		return utils.Responses[entities.ActivateV2Response]{
+		return utils.Response[entities.ActivateV2Response]{
+			Error:      cerrs.NewCustomError(http.StatusBadRequest, "code not valid", "emails.activate_v2.error_code_not_valid"),
 			StatusCode: 400,
-			Errors:     []string{"code not valid"},
-			Success:    false,
 		}
 	}
 
@@ -100,16 +97,15 @@ func (s EmailsService) ActivateV2(ctx context.Context, entity entities.Activate)
 	)
 
 	if err != nil {
-		return utils.Responses[entities.ActivateV2Response]{
+		return utils.Response[entities.ActivateV2Response]{
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error generating token", "emails.activate_v2.error_generating_token"),
 			StatusCode: 500,
-			Errors:     []string{err.Error()},
-			Success:    false,
 		}
 	}
 
-	return utils.Responses[entities.ActivateV2Response]{
+	return utils.Response[entities.ActivateV2Response]{
 		StatusCode: 200,
-		Body:       entities.ActivateV2Response{JWT: token},
+		Data:       entities.ActivateV2Response{JWT: token},
 		Success:    true,
 	}
 

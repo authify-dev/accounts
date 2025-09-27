@@ -5,12 +5,12 @@ import (
 	oauth "accounts/internal/api/v1/oauth_logins/domain/repositories"
 	users_entities "accounts/internal/api/v1/users/domain/entities"
 	users "accounts/internal/api/v1/users/domain/repositories"
-	"fmt"
-
 	"accounts/internal/common/logger"
-	"accounts/internal/core/domain/criteria"
-	"accounts/internal/utils"
 	"context"
+	"foundation/domain/criteria"
+	"foundation/utils"
+	"foundation/utils/cerrs"
+	"net/http"
 )
 
 type CreateOAuthStep struct {
@@ -56,15 +56,15 @@ func (s *CreateOAuthStep) Call(ctx context.Context, payload utils.Result[any], a
 
 	if err != nil {
 		entry.Error("error matching oauth")
-		return utils.Result[any]{Err: err}
+		return utils.Result[any]{Err: cerrs.NewCustomError(http.StatusInternalServerError, "error matching oauth", "oauth_logins.create_oauth.error_matching_oauth")}
 	}
 
 	if len(oauths) != 0 {
 		entry.Error("oauth already exists")
-		return utils.Result[any]{Err: fmt.Errorf("oauth already exists")}
+		return utils.Result[any]{Err: cerrs.NewCustomError(http.StatusBadRequest, "oauth already exists", "oauth_logins.create_oauth.oauth_already_exists")}
 	}
 
-	s.oauth.UserID = user.ID
+	s.oauth.UserID = user.ID.String()
 
 	result := s.oauth_repo.Save(s.oauth)
 	if result.Err != nil {
@@ -72,11 +72,8 @@ func (s *CreateOAuthStep) Call(ctx context.Context, payload utils.Result[any], a
 		return utils.Result[any]{Err: result.Err}
 	}
 
-	s.oauth_id = result.Data
-	s.oauth.ID = s.oauth_id
-
 	return utils.Result[any]{
-		Data: s.oauth,
+		Data: result.Data,
 	}
 }
 

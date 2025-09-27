@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 )
@@ -33,6 +34,7 @@ func (m *PostgresRepository[E, M]) View(data []E) {
 }
 
 func (r *PostgresRepository[E, M]) Save(role E) utils.Either[string] {
+	role.SetID(uuid.UUID{})
 	result := domain.EntityToModel[E, M](role)
 	if result.Err != nil {
 		return utils.Either[string]{Err: result.Err}

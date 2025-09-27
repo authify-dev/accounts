@@ -2,8 +2,8 @@ package repositories
 
 import (
 	"accounts/internal/api/v1/login_methods/domain/entities"
-	"accounts/internal/core/domain/criteria"
-	"accounts/internal/utils"
+	"foundation/domain/criteria"
+	"foundation/utils"
 )
 
 // --------------------------------
@@ -13,7 +13,7 @@ import (
 // --------------------------------
 
 type LoginMethodRepository interface {
-	Save(role entities.LoginMethod) utils.Either[string]
+	Save(role entities.LoginMethod) utils.Result[entities.LoginMethod]
 	Search(uuid string) (entities.LoginMethod, error)
 	SearchAll() ([]entities.LoginMethod, error)
 	Delete(uuid string) error

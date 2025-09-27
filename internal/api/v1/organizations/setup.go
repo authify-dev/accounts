@@ -4,7 +4,7 @@ import (
 	organizations_controllers "accounts/internal/api/v1/organizations/interface/controllers"
 	organizations_use_cases "accounts/internal/context/v1/organizations/app/use_cases"
 	"accounts/internal/core/settings"
-	organizations_gorm "accounts/internal/db/postgres/organizations"
+	organizations_gorm "accounts/internal/db/postgres/organinizations"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"

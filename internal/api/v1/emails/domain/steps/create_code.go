@@ -8,8 +8,8 @@ import (
 
 	codes "accounts/internal/api/v1/codes/domain/repositories"
 	"accounts/internal/common/logger"
-	"accounts/internal/utils"
 	"context"
+	"foundation/utils"
 )
 
 type CreateCodeStep struct {
@@ -45,10 +45,10 @@ func (s *CreateCodeStep) Call(ctx context.Context, payload utils.Result[any], al
 		return utils.Result[any]{Err: result.Err}
 	}
 
-	s.code_id = result.Data
+	s.code_id = result.Data.ID.String()
 
 	return utils.Result[any]{
-		Data: code_entity,
+		Data: result.Data,
 	}
 }
 

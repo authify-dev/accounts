@@ -2,8 +2,8 @@ package postgres
 
 import (
 	"accounts/internal/api/v1/refresh_tokens/domain/entities"
-	"accounts/internal/core/domain/criteria"
-	"accounts/internal/db/postgres"
+	"foundation/domain/criteria"
+	"foundation/infrastructure/db/cgorm"
 
 	"gorm.io/gorm"
 )
@@ -15,12 +15,12 @@ import (
 // --------------------------------
 
 type RefreshTokenPostgresRepository struct {
-	postgres.PostgresRepository[entities.RefreshToken, RefreshTokenModel]
+	cgorm.PostgresRepository[entities.RefreshToken, RefreshTokenModel]
 }
 
 func NewRefreshTokenPostgresRepository(connection *gorm.DB) *RefreshTokenPostgresRepository {
 	return &RefreshTokenPostgresRepository{
-		PostgresRepository: postgres.PostgresRepository[entities.RefreshToken, RefreshTokenModel]{
+		PostgresRepository: cgorm.PostgresRepository[entities.RefreshToken, RefreshTokenModel]{
 			Connection: connection,
 		},
 	}

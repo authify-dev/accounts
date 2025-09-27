@@ -3,12 +3,16 @@ package postgres
 import (
 	"accounts/internal/api/v1/login_methods/domain/entities"
 	"accounts/internal/core/settings"
-	"accounts/internal/db/postgres"
 	postgres_users "accounts/internal/db/postgres/users"
-	"fmt"
+	"foundation/infrastructure/db/cgorm"
+	"foundation/utils"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+)
+
+const (
+	ENTITY_LOGIN_METHOD_CODE = "07"
 )
 
 // --------------------------------
@@ -19,7 +23,7 @@ import (
 
 // LoginMethodModel utiliza Model parametrizado con User.
 type LoginMethodModel struct {
-	postgres.Model[entities.LoginMethod]
+	cgorm.Model[entities.LoginMethod]
 	UserID     string `gorm:"type:varchar(50);not null" json:"user_id"`
 	EntityID   string `gorm:"type:varchar(50);not null" json:"entity_id"`
 	EntityType string `gorm:"type:varchar(255);not null" json:"entity_type"`
@@ -38,11 +42,16 @@ func (LoginMethodModel) TableName() string {
 	return settings.Settings.DB_SCHEMA + ".login_methods"
 }
 
-func (c LoginMethodModel) GetID() string {
+func (c LoginMethodModel) GetID() uuid.UUID {
 	return c.ID
 }
 
 func (m *LoginMethodModel) BeforeCreate(tx *gorm.DB) (err error) {
-	m.ID = fmt.Sprintf("%s_%s", m.TableName()[:3], uuid.New().String())
+	idx, err := utils.NewUUIDx(settings.Settings.UUID_MODULE, ENTITY_LOGIN_METHOD_CODE)
+	if err != nil {
+		return err
+	}
+	_id := idx.UUID()
+	m.ID = _id
 	return m.Model.BeforeCreate(tx)
 }

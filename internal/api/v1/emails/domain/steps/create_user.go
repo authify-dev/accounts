@@ -5,10 +5,11 @@ import (
 	"accounts/internal/api/v1/users/domain/entities"
 	users "accounts/internal/api/v1/users/domain/repositories"
 	"accounts/internal/common/logger"
-	"accounts/internal/core/domain/criteria"
-	"accounts/internal/utils"
 	"context"
-	"errors"
+	"foundation/domain/criteria"
+	"foundation/utils"
+	"foundation/utils/cerrs"
+	"net/http"
 )
 
 type CreateUserStep struct {
@@ -50,32 +51,30 @@ func (s *CreateUserStep) Call(ctx context.Context, payload utils.Result[any], al
 	roles, err := s.role_repo.Matching(criteria)
 	if err != nil {
 		entry.Error("error matching role")
-		return utils.Result[any]{Err: err}
+		return utils.Result[any]{Err: cerrs.NewCustomError(http.StatusInternalServerError, "error matching role", "emails.create_user.error_matching_role")}
 	}
 
 	if len(roles) == 0 {
 		entry.Error("role not found")
-		return utils.Result[any]{Err: errors.New("role not found")}
+		return utils.Result[any]{Err: cerrs.NewCustomError(http.StatusNotFound, "role not found", "emails.create_user.role_not_found")}
 	}
 
-	role_id := roles[0].ID
+	role_id := roles[0].ID.String()
 
 	// Crear usuario
 	s.user.RoleID = role_id
 
 	result := s.user_repo.Save(s.user)
 
-	s.user.ID = result.Data
+	s.user.ID = result.Data.ID
 
 	if result.Err != nil {
 		entry.Error("error saving user")
 		return utils.Result[any]{Err: result.Err}
 	}
 
-	s.user_id = result.Data
-
 	return utils.Result[any]{
-		Data: s.user,
+		Data: result.Data,
 	}
 }
 

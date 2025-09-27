@@ -2,12 +2,12 @@ package repositories
 
 import (
 	"accounts/internal/api/v1/oauth_logins/domain/entities"
-	"accounts/internal/core/domain/criteria"
-	"accounts/internal/utils"
+	"foundation/domain/criteria"
+	"foundation/utils"
 )
 
 type OAuthLoginRepository interface {
-	Save(role entities.OAuthLogin) utils.Either[string]
+	Save(role entities.OAuthLogin) utils.Result[entities.OAuthLogin]
 	Search(uuid string) (entities.OAuthLogin, error)
 	SearchAll() ([]entities.OAuthLogin, error)
 	Delete(uuid string) error

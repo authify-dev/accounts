@@ -6,10 +6,12 @@ import (
 	emails "accounts/internal/db/postgres/emails"
 	login_methods "accounts/internal/db/postgres/login_methods"
 	oauth_logins "accounts/internal/db/postgres/oauth_logins"
+	organizations_pg "accounts/internal/db/postgres/organinizations"
 	pending_registrations "accounts/internal/db/postgres/pending_registrations"
 	policies_pg "accounts/internal/db/postgres/policies"
 	refreshtokens "accounts/internal/db/postgres/refresh_tokens"
 	role "accounts/internal/db/postgres/role"
+	role_policies_pg "accounts/internal/db/postgres/role_policies"
 	users "accounts/internal/db/postgres/users"
 
 	"fmt"
@@ -92,6 +94,18 @@ func main() {
 	err = db.AutoMigrate(&policies_pg.PolicyModel{})
 	if err != nil {
 		panic("failed to migrate policies: " + err.Error())
+	}
+
+	// Migrate role policies
+	err = db.AutoMigrate(&role_policies_pg.RolePoliciesModel{})
+	if err != nil {
+		panic("failed to migrate role policies: " + err.Error())
+	}
+
+	// Migrate organizations
+	err = db.AutoMigrate(&organizations_pg.OrganizationModel{})
+	if err != nil {
+		panic("failed to migrate organizations: " + err.Error())
 	}
 
 	fmt.Println("Migrations completed")

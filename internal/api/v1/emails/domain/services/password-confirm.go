@@ -4,12 +4,13 @@ import (
 	"accounts/internal/api/v1/emails/domain/entities"
 	email_events "accounts/internal/api/v1/emails/domain/events"
 	"accounts/internal/common/logger"
-	"accounts/internal/core/domain/criteria"
 	"accounts/internal/core/domain/event"
-	"accounts/internal/utils"
 	"context"
-	"fmt"
+	"foundation/domain/criteria"
+	"foundation/utils"
+	"foundation/utils/cerrs"
 	"log"
+	"net/http"
 	"time"
 
 	code_ents "accounts/internal/api/v1/codes/domain/entities"
@@ -19,7 +20,7 @@ import (
 func (s *EmailsService) ConfirmPassword(
 	ctx context.Context,
 	entity entities.ConfirmPassword,
-) utils.Responses[entities.ResetPasswordResponse] {
+) utils.Response[entities.ResetPasswordResponse] {
 	// Logger
 	entry := logger.FromContext(ctx)
 	entry.Info("Confirm Password")
@@ -28,9 +29,9 @@ func (s *EmailsService) ConfirmPassword(
 	email := s.getEmail(ctx, entity.Email)
 	if email.Err != nil {
 		entry.Error("Error al obtener el email")
-		return utils.Responses[entities.ResetPasswordResponse]{
+		return utils.Response[entities.ResetPasswordResponse]{
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error getting email", "emails.confirm_password.error_getting_email"),
 			StatusCode: 500,
-			Err:        email.Err,
 		}
 	}
 
@@ -38,70 +39,70 @@ func (s *EmailsService) ConfirmPassword(
 	code := s.verifyCode(ctx, email.Data.UserID, "reset_password", entity.Code)
 	if code.Err != nil {
 		entry.Error("Error al verificar el codigo")
-		return utils.Responses[entities.ResetPasswordResponse]{
+		return utils.Response[entities.ResetPasswordResponse]{
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error verifying code", "emails.confirm_password.error_verifying_code"),
 			StatusCode: 500,
-			Err:        code.Err,
 		}
 	}
 
 	// Get login method
-	login := s.getLoginMethod(ctx, email.Data.ID)
+	login := s.getLoginMethod(ctx, email.Data.ID.String())
 	if login.Err != nil {
 		entry.Error("Error al obtener el login method")
-		return utils.Responses[entities.ResetPasswordResponse]{
+		return utils.Response[entities.ResetPasswordResponse]{
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error getting login method", "emails.confirm_password.error_getting_login_method"),
 			StatusCode: 500,
-			Err:        login.Err,
 		}
 	}
 
-	err := s.login_methods_repository.UpdateByFields(login.Data.ID, map[string]interface{}{
+	err := s.login_methods_repository.UpdateByFields(login.Data.ID.String(), map[string]interface{}{
 		"is_verify": true,
 	})
 	if err != nil {
 		entry.Error("Error al actualizar el login method")
-		return utils.Responses[entities.ResetPasswordResponse]{
+		return utils.Response[entities.ResetPasswordResponse]{
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error updating login method", "emails.confirm_password.error_updating_login_method"),
 			StatusCode: 500,
-			Err:        err,
 		}
 	}
 
-	err = s.codes_repository.UpdateByFields(code.Data.ID, map[string]interface{}{
+	err = s.codes_repository.UpdateByFields(code.Data.ID.String(), map[string]interface{}{
 		"is_removed": true,
 	})
 	if err != nil {
 		entry.Error("Error al actualizar el codigo")
-		return utils.Responses[entities.ResetPasswordResponse]{
+		return utils.Response[entities.ResetPasswordResponse]{
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error updating code", "emails.confirm_password.error_updating_code"),
 			StatusCode: 500,
-			Err:        err,
 		}
 	}
 
 	pass_hashed, err := s.password_controller.HashPassword(entity.Password)
 	if err != nil {
 		entry.Error("Error al hashear la contraseña")
-		return utils.Responses[entities.ResetPasswordResponse]{
+		return utils.Response[entities.ResetPasswordResponse]{
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error hashing password", "emails.confirm_password.error_hashing_password"),
 			StatusCode: 500,
-			Err:        err,
 		}
 	}
 
-	err = s.repository.UpdateByFields(email.Data.ID, map[string]interface{}{
+	err = s.repository.UpdateByFields(email.Data.ID.String(), map[string]interface{}{
 		"password": pass_hashed,
 	})
 
 	if err != nil {
 		entry.Error("Error al actualizar la contraseña")
-		return utils.Responses[entities.ResetPasswordResponse]{
+		return utils.Response[entities.ResetPasswordResponse]{
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error updating password", "emails.confirm_password.error_updating_password"),
 			StatusCode: 500,
-			Err:        err,
 		}
 	}
 
 	s.publishChangedPasswordEvent(email.Data.Email, email.Data.Email)
 
-	return utils.Responses[entities.ResetPasswordResponse]{
+	return utils.Response[entities.ResetPasswordResponse]{
 		StatusCode: 200,
-		Body: entities.ResetPasswordResponse{
+		Data: entities.ResetPasswordResponse{
 			Message: "Password updated",
 		},
 	}
@@ -137,14 +138,14 @@ func (s *EmailsService) getLoginMethod(
 	if err != nil {
 		entry.Error("Error al obtener el login method")
 		return utils.Result[login_ents.LoginMethod]{
-			Err: err,
+			Err: cerrs.NewCustomError(http.StatusInternalServerError, "error getting login method", "emails.confirm_password.error_getting_login_method"),
 		}
 	}
 
 	if len(logins) == 0 {
 		entry.Error("Login method not found")
 		return utils.Result[login_ents.LoginMethod]{
-			Err: fmt.Errorf("login method not found"),
+			Err: cerrs.NewCustomError(http.StatusNotFound, "login method not found", "emails.confirm_password.error_login_method_not_found"),
 		}
 	}
 
@@ -196,14 +197,14 @@ func (s *EmailsService) verifyCode(
 	if err != nil {
 		entry.Error("Error al obtener el codigo")
 		return utils.Result[code_ents.Code]{
-			Err: err,
+			Err: cerrs.NewCustomError(http.StatusInternalServerError, "error getting code", "emails.confirm_password.error_getting_code"),
 		}
 	}
 
 	if len(codes) == 0 {
 		entry.Error("Code not found")
 		return utils.Result[code_ents.Code]{
-			Err: fmt.Errorf("code not found"),
+			Err: cerrs.NewCustomError(http.StatusNotFound, "code not found", "emails.confirm_password.error_code_not_found"),
 		}
 	}
 
@@ -212,7 +213,7 @@ func (s *EmailsService) verifyCode(
 	if code_ent.Code != code {
 		entry.Error("Code not valid")
 		return utils.Result[code_ents.Code]{
-			Err: fmt.Errorf("code not valid"),
+			Err: cerrs.NewCustomError(http.StatusUnauthorized, "code not valid", "emails.confirm_password.error_code_not_valid"),
 		}
 	}
 
@@ -244,14 +245,14 @@ func (s *EmailsService) getEmail(ctx context.Context, email string) utils.Result
 	if err != nil {
 		entry.Error("Error al obtener el email")
 		return utils.Result[entities.Email]{
-			Err: err,
+			Err: cerrs.NewCustomError(http.StatusInternalServerError, "error getting email", "emails.confirm_password.error_getting_email"),
 		}
 	}
 
 	if len(emails) == 0 {
 		entry.Error("Email not found")
 		return utils.Result[entities.Email]{
-			Err: fmt.Errorf("email not found"),
+			Err: cerrs.NewCustomError(http.StatusNotFound, "email not found", "emails.confirm_password.error_email_not_found"),
 		}
 	}
 

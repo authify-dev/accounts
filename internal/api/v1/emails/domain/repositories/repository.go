@@ -2,8 +2,8 @@ package repositories
 
 import (
 	"accounts/internal/api/v1/emails/domain/entities"
-	"accounts/internal/core/domain/criteria"
-	"accounts/internal/utils"
+	"foundation/domain/criteria"
+	"foundation/utils"
 )
 
 // --------------------------------
@@ -13,7 +13,7 @@ import (
 // --------------------------------
 
 type EmailRepository interface {
-	Save(role entities.Email) utils.Either[string]
+	Save(role entities.Email) utils.Result[entities.Email]
 	Search(uuid string) (entities.Email, error)
 	SearchAll() ([]entities.Email, error)
 	Delete(uuid string) error

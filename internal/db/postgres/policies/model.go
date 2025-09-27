@@ -4,11 +4,11 @@ import (
 	"accounts/internal/api/v1/policies/domain/entities"
 	policies_enums "accounts/internal/api/v1/policies/domain/enums"
 	"accounts/internal/core/settings"
-	"accounts/internal/db/postgres"
-	organizations_gorm "accounts/internal/db/postgres/organizations"
-	"foundation/types/uuidx"
-	"time"
+	organizations_gorm "accounts/internal/db/postgres/organinizations"
+	"foundation/infrastructure/db/cgorm"
+	"foundation/utils"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -19,7 +19,7 @@ const (
 // PolicyModel representa el modelo de datos para la entidad Policy.
 type PolicyModel struct {
 	// Se asume que postgres.Model es un struct genérico que contiene campos comunes (como ID).
-	postgres.Model[entities.PolicyEntity]
+	cgorm.Model[entities.PolicyEntity]
 
 	Name           string                      `json:"name"`
 	Description    string                      `json:"description,omitempty"`
@@ -40,17 +40,15 @@ func (PolicyModel) TableName() string {
 }
 
 // GetID retorna el identificador único del modelo.
-func (o PolicyModel) GetID() string {
+func (o PolicyModel) GetID() uuid.UUID {
 	return o.ID
 }
 
 func (m *PolicyModel) BeforeCreate(tx *gorm.DB) (err error) {
-	idx, err := uuidx.NewUUIDx(settings.Settings.UUID_MODULE, ENTITY_POLICY_CODE)
+	idx, err := utils.NewUUIDx(settings.Settings.UUID_MODULE, ENTITY_POLICY_CODE)
 	if err != nil {
 		return err
 	}
-	m.ID = idx.UUID().String()
-	m.CreatedAt = time.Now()
-	m.UpdatedAt = time.Now()
+	m.ID = idx.UUID()
 	return m.Model.BeforeCreate(tx)
 }

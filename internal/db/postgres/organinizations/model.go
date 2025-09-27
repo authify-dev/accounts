@@ -1,11 +1,12 @@
 package organizations_gorm
 
 import (
-	"accounts/internal/context/v1/organizations/domain/entities"
+	"accounts/internal/api/v1/organizations/domain/entities"
 	"accounts/internal/core/settings"
-	"accounts/internal/db/postgres"
-	"foundation/types/uuidx"
+	"foundation/infrastructure/db/cgorm"
+	"foundation/utils"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -16,7 +17,7 @@ const (
 // OrganizationModel representa el modelo de datos para la entidad Organization.
 type OrganizationModel struct {
 	// Se asume que postgres.Model es un struct genérico que contiene campos comunes (como ID).
-	postgres.Model[entities.Organization]
+	cgorm.Model[entities.Organization]
 
 	// RootUserID es el identificador del usuario raíz de la organización.
 	RootUserID string `gorm:"type:varchar(50);not null" json:"root_user_id,omitempty"`
@@ -31,16 +32,16 @@ func (OrganizationModel) TableName() string {
 }
 
 // GetID retorna el identificador único del modelo.
-func (o OrganizationModel) GetID() string {
+func (o OrganizationModel) GetID() uuid.UUID {
 	return o.ID
 }
 
 func (m *OrganizationModel) BeforeCreate(tx *gorm.DB) (err error) {
-	idx, err := uuidx.NewUUIDx(settings.Settings.UUID_MODULE, ENTITY_ORGANIZATION_CODE)
+	idx, err := utils.NewUUIDx(settings.Settings.UUID_MODULE, ENTITY_ORGANIZATION_CODE)
 	if err != nil {
 		return err
 	}
-	m.ID = idx.UUID().String()
+	m.ID = idx.UUID()
 
 	return m.Model.BeforeCreate(tx)
 }

@@ -2,8 +2,8 @@ package repositories
 
 import (
 	"accounts/internal/api/v1/policies/domain/entities"
-	"accounts/internal/core/domain/criteria"
-	"accounts/internal/utils"
+	"foundation/domain/criteria"
+	"foundation/utils"
 )
 
 // --------------------------------
@@ -13,7 +13,7 @@ import (
 // --------------------------------
 
 type PolicyRepository interface {
-	SaveEntity(policy entities.PolicyEntity) utils.Either[entities.PolicyEntity]
+	Save(policy entities.PolicyEntity) utils.Result[entities.PolicyEntity]
 	Search(uuid string) (entities.PolicyEntity, error)
 	SearchAll() ([]entities.PolicyEntity, error)
 	Delete(uuid string) error

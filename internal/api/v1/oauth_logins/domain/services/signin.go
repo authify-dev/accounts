@@ -6,13 +6,15 @@ import (
 	"accounts/internal/common/controllers/saga"
 	"accounts/internal/common/logger"
 	"accounts/internal/core/domain"
-	"accounts/internal/core/domain/criteria"
 	"accounts/internal/core/domain/event"
-	"accounts/internal/utils"
 	"context"
 	"errors"
 	"fmt"
+	"foundation/domain/criteria"
+	"foundation/utils"
+	"foundation/utils/cerrs"
 	"log"
+	"net/http"
 
 	email_events "accounts/internal/api/v1/emails/domain/events"
 
@@ -26,31 +28,35 @@ import (
 	"github.com/google/uuid"
 )
 
+func GenerateRandomUserName() string {
+	id := uuid.New()
+
+	return fmt.Sprintf("User_%s", id.String())
+}
+
 type GenerateTokensFlow struct {
 	jwt           string
 	refresh_token string
 }
 
-func (s *OAuthService) SignInGoogle(ctx context.Context, code, role string) utils.Responses[entities.SignInResponse] {
+func (s *OAuthService) SignInGoogle(ctx context.Context, code, role string) utils.Response[entities.SignInResponse] {
 
 	entry := logger.FromContext(ctx)
 
 	// Obtener el token
 	token_result := s.google_repository.GetToken(code)
 	if token_result.Err != nil {
-		return utils.Responses[entities.SignInResponse]{
-			Err:        token_result.Err,
+		return utils.Response[entities.SignInResponse]{
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error getting token", "oauth_logins.signin.google.error_getting_token"),
 			StatusCode: 500,
-			Success:    false,
 		}
 	}
 	// Obtener la data del usuario
 	user_info_result := s.google_repository.GetUserInfo(token_result.Data)
 	if user_info_result.Err != nil {
-		return utils.Responses[entities.SignInResponse]{
-			Err:        user_info_result.Err,
+		return utils.Response[entities.SignInResponse]{
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error getting user info", "oauth_logins.signin.google.error_getting_user_info"),
 			StatusCode: 500,
-			Success:    false,
 		}
 	}
 
@@ -71,8 +77,8 @@ func (s *OAuthService) SignInGoogle(ctx context.Context, code, role string) util
 	oauth, err := s.oauth_repository.Matching(cri)
 	if err != nil {
 		entry.Error("error matching oauth")
-		return utils.Responses[entities.SignInResponse]{
-			Err:        err,
+		return utils.Response[entities.SignInResponse]{
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error matching oauth", "oauth_logins.signin.google.error_matching_oauth"),
 			StatusCode: 500,
 		}
 	}
@@ -91,7 +97,7 @@ func (s *OAuthService) SignInGoogle(ctx context.Context, code, role string) util
 
 		// Generar usuario
 		user := users.User{
-			UserName: utils.GenerateRandomUserName(),
+			UserName: GenerateRandomUserName(),
 			Role:     role,
 			Name:     user_info_result.Data.Name,
 		}
@@ -124,7 +130,10 @@ func (s *OAuthService) SignInGoogle(ctx context.Context, code, role string) util
 		if !controller.Ok() {
 			entry.Error("Error al crear usuario y oauth")
 			err := errors.New(fmt.Sprintln("Error al crear usuario y oauth: ", controller.Errors()))
-			return utils.Responses[entities.SignInResponse]{Err: err}
+			return utils.Response[entities.SignInResponse]{
+				Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error creating user and oauth"+err.Error(), "oauth_logins.signin.google.error_creating_user_and_oauth"),
+				StatusCode: 500,
+			}
 		}
 
 		oauth_ent = results["entities.OAuthLogin"].Data.(oauth_logins.OAuthLogin)
@@ -136,8 +145,8 @@ func (s *OAuthService) SignInGoogle(ctx context.Context, code, role string) util
 			Steps: []saga.SAGA_Step[any]{
 				steps.NewCreateLoginStep(
 					s.login_method_repository,
-					user_ent.ID,
-					oauth_ent.ID,
+					user_ent.ID.String(),
+					oauth_ent.ID.String(),
 					"oauth",
 				),
 			},
@@ -149,7 +158,10 @@ func (s *OAuthService) SignInGoogle(ctx context.Context, code, role string) util
 		if !controller.Ok() {
 			entry.Error("Error al crear login")
 			err := errors.New(fmt.Sprintln("Error al crear usuario y email: ", controller.Errors()))
-			return utils.Responses[entities.SignInResponse]{Err: err}
+			return utils.Response[entities.SignInResponse]{
+				Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error creating login"+err.Error(), "oauth_logins.signin.google.error_creating_login"),
+				StatusCode: 500,
+			}
 		}
 
 		entry.Info("Login, Refresh Token and Code created")
@@ -159,10 +171,9 @@ func (s *OAuthService) SignInGoogle(ctx context.Context, code, role string) util
 		refreshs_result := s.createRefreshToken(ctx, login_ent)
 		if refreshs_result.Err != nil {
 			entry.Error("Error al crear refresh token")
-			return utils.Responses[entities.SignInResponse]{
-				Err:        refreshs_result.Err,
+			return utils.Response[entities.SignInResponse]{
+				Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error creating refresh token"+refreshs_result.Err.Error(), "oauth_logins.signin.google.error_creating_refresh_token"),
 				StatusCode: 500,
-				Success:    false,
 			}
 		}
 
@@ -190,19 +201,17 @@ func (s *OAuthService) SignInGoogle(ctx context.Context, code, role string) util
 
 		if err != nil {
 			entry.Error("error matching user")
-			return utils.Responses[entities.SignInResponse]{
-				Err:        err,
+			return utils.Response[entities.SignInResponse]{
+				Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error matching user"+err.Error(), "oauth_logins.signin.google.error_matching_user"),
 				StatusCode: 500,
-				Success:    false,
 			}
 		}
 
 		if len(user) == 0 {
 			entry.Error("user not found")
-			return utils.Responses[entities.SignInResponse]{
-				Err:        errors.New("user not found"),
+			return utils.Response[entities.SignInResponse]{
+				Error:      cerrs.NewCustomError(http.StatusNotFound, "user not found", "oauth_logins.signin.google.user_not_found"),
 				StatusCode: 404,
-				Success:    false,
 			}
 		}
 
@@ -237,19 +246,17 @@ func (s *OAuthService) SignInGoogle(ctx context.Context, code, role string) util
 
 		if err != nil {
 			entry.Error("error matching login")
-			return utils.Responses[entities.SignInResponse]{
-				Err:        err,
+			return utils.Response[entities.SignInResponse]{
+				Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error matching login"+err.Error(), "oauth_logins.signin.google.error_matching_login"),
 				StatusCode: 500,
-				Success:    false,
 			}
 		}
 
 		if len(login) == 0 {
 			entry.Error("login not found")
-			return utils.Responses[entities.SignInResponse]{
-				Err:        errors.New("login not found"),
+			return utils.Response[entities.SignInResponse]{
+				Error:      cerrs.NewCustomError(http.StatusNotFound, "login not found", "oauth_logins.signin.google.login_not_found"),
 				StatusCode: 404,
-				Success:    false,
 			}
 		}
 
@@ -277,19 +284,17 @@ func (s *OAuthService) SignInGoogle(ctx context.Context, code, role string) util
 		refreshs, err := s.refresh_repository.Matching(cri)
 		if err != nil {
 			entry.Error("error matching refresh token")
-			return utils.Responses[entities.SignInResponse]{
-				Err:        err,
+			return utils.Response[entities.SignInResponse]{
+				Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error matching refresh token"+err.Error(), "oauth_logins.signin.google.error_matching_refresh_token"),
 				StatusCode: 500,
-				Success:    false,
 			}
 		}
 
 		if len(refreshs) == 0 {
 			entry.Error("refresh token not found")
-			return utils.Responses[entities.SignInResponse]{
-				Err:        errors.New("refresh token not found"),
+			return utils.Response[entities.SignInResponse]{
+				Error:      cerrs.NewCustomError(http.StatusNotFound, "refresh token not found", "oauth_logins.signin.google.refresh_token_not_found"),
 				StatusCode: 404,
-				Success:    false,
 			}
 		}
 
@@ -300,17 +305,17 @@ func (s *OAuthService) SignInGoogle(ctx context.Context, code, role string) util
 	result := s.generateTokens(ctx, login_ent, refreshs_ent)
 
 	if result.Err != nil {
-		return utils.Responses[entities.SignInResponse]{
+		return utils.Response[entities.SignInResponse]{
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error generating tokens"+result.Err.Error(), "oauth_logins.signin.google.error_generating_tokens"),
 			StatusCode: 500,
-			Errors:     []string{result.Err.Error()},
 		}
 	}
 
 	s.publishActivationUserEvent(oauth_ent.Email, user_ent.Name)
 
 	// Enviamos el email de binevenida
-	return utils.Responses[entities.SignInResponse]{
-		Body: entities.SignInResponse{
+	return utils.Response[entities.SignInResponse]{
+		Data: entities.SignInResponse{
 			JWT:          result.Data.jwt,
 			RefreshToken: result.Data.refresh_token,
 		},
@@ -319,7 +324,7 @@ func (s *OAuthService) SignInGoogle(ctx context.Context, code, role string) util
 
 }
 
-func (s OAuthService) createRefreshToken(ctx context.Context, login login_methods.LoginMethod) utils.Either[refreshs.RefreshToken] {
+func (s OAuthService) createRefreshToken(ctx context.Context, login login_methods.LoginMethod) utils.Result[refreshs.RefreshToken] {
 
 	entry := logger.FromContext(ctx)
 
@@ -328,30 +333,30 @@ func (s OAuthService) createRefreshToken(ctx context.Context, login login_method
 	entity := refreshs.RefreshToken{
 		UserID:        login.UserID,
 		Entity:        domain.Entity{},
-		LoginMethodID: login.ID,
+		LoginMethodID: login.ID.String(),
 		ExternalID:    external_id.String(),
 	}
 
 	result := s.refresh_repository.Save(entity)
 	if result.Err != nil {
 		entry.Error("error saving the refresh token")
-		return utils.Either[refreshs.RefreshToken]{Err: result.Err}
+		return utils.Result[refreshs.RefreshToken]{Err: result.Err}
 	}
 
-	entity.ID = result.Data
+	entity.ID = result.Data.ID
 
-	return utils.Either[refreshs.RefreshToken]{
+	return utils.Result[refreshs.RefreshToken]{
 		Data: entity,
 	}
 }
 
-func (s OAuthService) generateTokens(ctx context.Context, login login_methods.LoginMethod, refreshToken refreshs.RefreshToken) utils.Either[GenerateTokensFlow] {
+func (s OAuthService) generateTokens(ctx context.Context, login login_methods.LoginMethod, refreshToken refreshs.RefreshToken) utils.Result[GenerateTokensFlow] {
 
 	jwt := login.ToJWT(ctx, s.jwt_controller)
 
 	refresh_token := refreshToken.ToJWT(ctx, s.jwt_controller)
 
-	return utils.Either[GenerateTokensFlow]{Data: GenerateTokensFlow{
+	return utils.Result[GenerateTokensFlow]{Data: GenerateTokensFlow{
 		jwt:           jwt,
 		refresh_token: refresh_token,
 	}}

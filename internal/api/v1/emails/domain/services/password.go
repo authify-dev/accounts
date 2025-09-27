@@ -5,11 +5,13 @@ import (
 	email_events "accounts/internal/api/v1/emails/domain/events"
 	"accounts/internal/common/logger"
 	"accounts/internal/core/domain"
-	"accounts/internal/core/domain/criteria"
 	"accounts/internal/core/domain/event"
-	"accounts/internal/utils"
 	"context"
+	"foundation/domain/criteria"
+	"foundation/utils"
+	"foundation/utils/cerrs"
 	"log"
+	"net/http"
 
 	codes_entities "accounts/internal/api/v1/codes/domain/entities"
 )
@@ -17,7 +19,7 @@ import (
 func (s *EmailsService) ResetPassword(
 	ctx context.Context,
 	entity entities.ResetPassword,
-) utils.Responses[entities.ResendActivationCodeResponse] {
+) utils.Response[entities.ResendActivationCodeResponse] {
 
 	// Logger
 	entry := logger.FromContext(ctx)
@@ -38,16 +40,16 @@ func (s *EmailsService) ResetPassword(
 
 	emails, err := s.repository.Matching(criteria_email)
 	if err != nil {
-		return utils.Responses[entities.ResendActivationCodeResponse]{
+		return utils.Response[entities.ResendActivationCodeResponse]{
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error getting email", "emails.reset_password.error_getting_email"),
 			StatusCode: 500,
-			Errors:     []string{err.Error()},
 		}
 	}
 
 	if len(emails) == 0 {
-		return utils.Responses[entities.ResendActivationCodeResponse]{
+		return utils.Response[entities.ResendActivationCodeResponse]{
+			Error:      cerrs.NewCustomError(http.StatusNotFound, "email not found", "emails.reset_password.error_email_not_found"),
 			StatusCode: 404,
-			Errors:     []string{"email not found"},
 		}
 	}
 
@@ -56,9 +58,9 @@ func (s *EmailsService) ResetPassword(
 
 	user, err := s.user_repository.Search(email.UserID)
 	if err != nil {
-		return utils.Responses[entities.ResendActivationCodeResponse]{
+		return utils.Response[entities.ResendActivationCodeResponse]{
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error getting user", "emails.reset_password.error_getting_user"),
 			StatusCode: 500,
-			Errors:     []string{err.Error()},
 		}
 	}
 
@@ -87,16 +89,16 @@ func (s *EmailsService) ResetPassword(
 
 	codes, err := s.codes_repository.Matching(criteria_codes)
 	if err != nil {
-		return utils.Responses[entities.ResendActivationCodeResponse]{
+		return utils.Response[entities.ResendActivationCodeResponse]{
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error getting codes", "emails.reset_password.error_getting_codes"),
 			StatusCode: 500,
-			Errors:     []string{err.Error()},
 		}
 	}
 
 	for _, code := range codes {
 		if code.UserID == email.UserID && !code.IsRemoved {
 			// Update code
-			s.codes_repository.UpdateByFields(code.ID, map[string]interface{}{
+			s.codes_repository.UpdateByFields(code.ID.String(), map[string]interface{}{
 				"is_removed": true,
 			})
 		}
@@ -113,13 +115,13 @@ func (s *EmailsService) ResetPassword(
 
 	result := s.codes_repository.Save(code)
 	if result.Err != nil {
-		return utils.Responses[entities.ResendActivationCodeResponse]{
+		return utils.Response[entities.ResendActivationCodeResponse]{
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error saving code", "emails.reset_password.error_saving_code"),
 			StatusCode: 500,
-			Errors:     []string{result.Err.Error()},
 		}
 	}
 
-	code.ID = result.Data
+	code.ID = result.Data.ID
 
 	// Publish event
 
@@ -127,9 +129,9 @@ func (s *EmailsService) ResetPassword(
 
 	entry.Info("Event published")
 
-	return utils.Responses[entities.ResendActivationCodeResponse]{
+	return utils.Response[entities.ResendActivationCodeResponse]{
 		StatusCode: 200,
-		Body: entities.ResendActivationCodeResponse{
+		Data: entities.ResendActivationCodeResponse{
 			Message: "Activation code sent",
 		},
 	}

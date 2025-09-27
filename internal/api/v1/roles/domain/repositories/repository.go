@@ -2,8 +2,8 @@ package repositories
 
 import (
 	"accounts/internal/api/v1/roles/domain/entities"
-	"accounts/internal/core/domain/criteria"
-	"accounts/internal/utils"
+	"foundation/domain/criteria"
+	"foundation/utils"
 )
 
 // --------------------------------
@@ -13,7 +13,7 @@ import (
 // --------------------------------
 
 type RoleRepository interface {
-	Save(role entities.Role) utils.Either[string]
+	Save(role entities.Role) utils.Result[entities.Role]
 	Search(uuid string) (entities.Role, error)
 	SearchAll() ([]entities.Role, error)
 	Delete(uuid string) error

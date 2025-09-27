@@ -5,8 +5,9 @@ import (
 	"accounts/internal/api/v1/emails/domain/entities"
 	email_events "accounts/internal/api/v1/emails/domain/events"
 	"accounts/internal/api/v1/emails/domain/steps"
-	"errors"
 	"fmt"
+	"net/http"
+	"strings"
 
 	"accounts/internal/core/domain/event"
 	"log"
@@ -15,25 +16,26 @@ import (
 
 	"accounts/internal/common/controllers/saga"
 	"accounts/internal/common/logger"
-	"accounts/internal/utils"
 	"context"
+	"foundation/utils"
+	"foundation/utils/cerrs"
 )
 
-func (s EmailsService) generateUser(entity entities.SignUp) utils.Either[users.User] {
-	return utils.Either[users.User]{Data: users.User{
+func (s EmailsService) generateUser(entity entities.SignUp) utils.Result[users.User] {
+	return utils.Result[users.User]{Data: users.User{
 		UserName: entity.UserName,
 		Role:     entity.Role,
 	}}
 }
 
-func (s EmailsService) generateEmail(entity entities.SignUp) utils.Either[entities.Email] {
+func (s EmailsService) generateEmail(entity entities.SignUp) utils.Result[entities.Email] {
 
 	password_hashed, err := s.password_controller.HashPassword(entity.Password)
 	if err != nil {
-		return utils.Either[entities.Email]{Err: err}
+		return utils.Result[entities.Email]{Err: cerrs.NewCustomError(http.StatusInternalServerError, "error hashing password", "emails.signup.error_hashing_password")}
 	}
 
-	return utils.Either[entities.Email]{Data: entities.Email{
+	return utils.Result[entities.Email]{Data: entities.Email{
 		Email:    entity.Email,
 		Password: password_hashed,
 	}}
@@ -44,18 +46,18 @@ type RegisterUserFlow struct {
 	results    map[string]utils.Result[any]
 }
 
-func (s EmailsService) registerUserWithEmail(ctx context.Context, entity entities.SignUp) utils.Either[RegisterUserFlow] {
+func (s EmailsService) registerUserWithEmail(ctx context.Context, entity entities.SignUp) utils.Result[RegisterUserFlow] {
 	// Generar usuario
 	user_result := s.generateUser(entity)
 	if user_result.Err != nil {
-		return utils.Either[RegisterUserFlow]{Err: user_result.Err}
+		return utils.Result[RegisterUserFlow]{Err: user_result.Err}
 	}
 	user := user_result.Data
 
 	// Generar email
 	email_result := s.generateEmail(entity)
 	if email_result.Err != nil {
-		return utils.Either[RegisterUserFlow]{Err: user_result.Err}
+		return utils.Result[RegisterUserFlow]{Err: user_result.Err}
 	}
 	email := email_result.Data
 
@@ -78,11 +80,10 @@ func (s EmailsService) registerUserWithEmail(ctx context.Context, entity entitie
 	results := controller.Executed(ctx)
 
 	if !controller.Ok() {
-		err := errors.New(fmt.Sprintln("Error al crear usuario y email: ", controller.Errors()))
-		return utils.Either[RegisterUserFlow]{Err: err}
+		return utils.Result[RegisterUserFlow]{Err: cerrs.NewCustomError(http.StatusInternalServerError, "error creating user and email"+strings.Join(controller.Errors(), ","), "emails.signup.error_creating_user_and_email")}
 	}
 
-	return utils.Either[RegisterUserFlow]{Data: RegisterUserFlow{
+	return utils.Result[RegisterUserFlow]{Data: RegisterUserFlow{
 		controller: &controller,
 		results:    results,
 	}}
@@ -93,7 +94,7 @@ type RegisterLoginFlow struct {
 	results    map[string]utils.Result[any]
 }
 
-func (s EmailsService) registerLogin(ctx context.Context, registerUserFlow RegisterUserFlow) utils.Either[RegisterLoginFlow] {
+func (s EmailsService) registerLogin(ctx context.Context, registerUserFlow RegisterUserFlow) utils.Result[RegisterLoginFlow] {
 	results := registerUserFlow.results
 	controller := registerUserFlow.controller
 
@@ -106,13 +107,13 @@ func (s EmailsService) registerLogin(ctx context.Context, registerUserFlow Regis
 		Steps: []saga.SAGA_Step[any]{
 			steps.NewCreateLoginStep(
 				s.login_methods_repository,
-				user.ID,
-				email.ID,
+				user.ID.String(),
+				email.ID.String(),
 				"email",
 			),
 			steps.NewCreateCodeStep(
 				s.codes_repository,
-				user.ID,
+				user.ID.String(),
 			),
 		},
 		PrevSaga: controller,
@@ -121,10 +122,10 @@ func (s EmailsService) registerLogin(ctx context.Context, registerUserFlow Regis
 	results_login := controller_login.Executed(ctx)
 
 	if !controller_login.Ok() {
-		return utils.Either[RegisterLoginFlow]{Err: errors.New(fmt.Sprintln("Error al crear login, refresh token y code: ", controller_login.Errors()))}
+		return utils.Result[RegisterLoginFlow]{Err: cerrs.NewCustomError(http.StatusInternalServerError, "error creating login, refresh token and code", "emails.signup.error_creating_login_refresh_token_and_code")}
 	}
 
-	return utils.Either[RegisterLoginFlow]{Data: RegisterLoginFlow{
+	return utils.Result[RegisterLoginFlow]{Data: RegisterLoginFlow{
 		controller: &controller_login,
 		results:    results_login,
 	}}
@@ -155,7 +156,7 @@ func (s EmailsService) publishRegisteredUserEvent(email string, user_name string
 func (s *EmailsService) SignUp(
 	ctx context.Context,
 	entity entities.SignUp,
-) utils.Responses[entities.SignUpResponse] {
+) utils.Response[entities.SignUpResponse] {
 
 	// Logger
 	entry := logger.FromContext(ctx)
@@ -166,7 +167,7 @@ func (s *EmailsService) SignUp(
 
 	if results_map.Err != nil {
 		entry.Error(fmt.Sprintf("Error al crear usuario y email: %s", results_map.Err.Error()))
-		return utils.Responses[entities.SignUpResponse]{Errors: []string{results_map.Err.Error()}, StatusCode: 500}
+		return utils.Response[entities.SignUpResponse]{Error: results_map.Err, StatusCode: 500}
 	}
 
 	results := results_map.Data
@@ -178,7 +179,7 @@ func (s *EmailsService) SignUp(
 
 	if result_login.Err != nil {
 		entry.Error(fmt.Sprintf("Error al crear login, refresh token y code: %s", result_login.Err.Error()))
-		return utils.Responses[entities.SignUpResponse]{Errors: []string{result_login.Err.Error()}, StatusCode: 500}
+		return utils.Response[entities.SignUpResponse]{Error: result_login.Err, StatusCode: 500}
 	}
 
 	results_login := result_login.Data.results
@@ -194,8 +195,8 @@ func (s *EmailsService) SignUp(
 
 	// Response
 
-	response := utils.Responses[entities.SignUpResponse]{
-		Body: entities.SignUpResponse{
+	response := utils.Response[entities.SignUpResponse]{
+		Data: entities.SignUpResponse{
 			Message: "User created check your email by activate your account",
 		},
 	}

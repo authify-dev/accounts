@@ -1,8 +1,8 @@
 package organizations_use_cases
 
 import (
-	"accounts/internal/context/v1/organizations/domain/entities"
-	organizations_gorm "accounts/internal/db/postgres/organizations"
+	"accounts/internal/api/v1/organizations/domain/entities"
+	organizations_gorm "accounts/internal/db/postgres/organinizations"
 	"accounts/internal/utils"
 	"context"
 )
@@ -24,10 +24,8 @@ func (u *CreateOrganizationsUseCase) Execute(ctx context.Context) utils.Response
 
 	res := u.repository.Save(organization)
 
-	organization.ID = res.Data
-
 	return utils.Responses[entities.Organization]{
-		Body: organization,
+		Body: res.Data,
 	}
 
 }

@@ -3,13 +3,14 @@ package services
 import (
 	policies_entities "accounts/internal/api/v1/policies/domain/entities"
 	"accounts/internal/common/logger"
-	"accounts/internal/core/domain/criteria"
-	"accounts/internal/utils"
 	"context"
+	"foundation/domain/criteria"
+	"foundation/utils"
+	"foundation/utils/cerrs"
 	"net/http"
 )
 
-func (s *RolePoliciesService) Info(ctx context.Context, role_id string) utils.Responses[map[string]interface{}] {
+func (s *RolePoliciesService) Info(ctx context.Context, role_id string) utils.Response[map[string]interface{}] {
 	entry := logger.FromContext(ctx)
 
 	entry.Info("Getting role policies info")
@@ -18,8 +19,8 @@ func (s *RolePoliciesService) Info(ctx context.Context, role_id string) utils.Re
 
 	if err != nil {
 		entry.Error("Error getting role", "error", err)
-		return utils.Responses[map[string]interface{}]{
-			Err: err,
+		return utils.Response[map[string]interface{}]{
+			Error: cerrs.NewCustomError(http.StatusInternalServerError, "Error getting role", "role_policies.info.error_getting_role"),
 		}
 	}
 
@@ -39,8 +40,8 @@ func (s *RolePoliciesService) Info(ctx context.Context, role_id string) utils.Re
 
 	if err != nil {
 		entry.Error("Error getting policies", "error", err)
-		return utils.Responses[map[string]interface{}]{
-			Err: err,
+		return utils.Response[map[string]interface{}]{
+			Error: cerrs.NewCustomError(http.StatusInternalServerError, "Error getting policies", "role_policies.info.error_getting_policies"),
 		}
 	}
 
@@ -50,16 +51,16 @@ func (s *RolePoliciesService) Info(ctx context.Context, role_id string) utils.Re
 		policy, err := s.policies_repository.Search(role_policy.PolicyID)
 		if err != nil {
 			entry.Error("Error getting policy", "error", err)
-			return utils.Responses[map[string]interface{}]{
-				Err: err,
+			return utils.Response[map[string]interface{}]{
+				Error: cerrs.NewCustomError(http.StatusInternalServerError, "Error getting policy", "role_policies.info.error_getting_policy"),
 			}
 		}
 
 		policies = append(policies, policy)
 	}
 
-	return utils.Responses[map[string]interface{}]{
-		Body: map[string]interface{}{
+	return utils.Response[map[string]interface{}]{
+		Data: map[string]interface{}{
 			"role":     role,
 			"policies": policies,
 		},

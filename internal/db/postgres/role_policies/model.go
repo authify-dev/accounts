@@ -3,13 +3,18 @@ package rolepolicies_pg
 import (
 	"accounts/internal/api/v1/role_policies/domain/entities"
 	"accounts/internal/core/settings"
-	"accounts/internal/db/postgres"
+	organizations_gorm "accounts/internal/db/postgres/organinizations"
 	postgres_policies "accounts/internal/db/postgres/policies"
 	postgres_roles "accounts/internal/db/postgres/role"
-	"fmt"
+	"foundation/infrastructure/db/cgorm"
+	"foundation/utils"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+)
+
+const (
+	ENTITY_ROLE_POLICIES_CODE = "04"
 )
 
 // --------------------------------
@@ -20,12 +25,14 @@ import (
 
 // RolePoliciesModel utiliza Model parametrizado con RolePolicies.
 type RolePoliciesModel struct {
-	postgres.Model[entities.RolePoliciesEntity]
-	RoleID   string `gorm:"type:varchar(50);not null" json:"role_id"`
-	PolicyID string `gorm:"type:varchar(50);not null" json:"policy_id"`
+	cgorm.Model[entities.RolePoliciesEntity]
+	RoleID         string `gorm:"type:varchar(50);not null" json:"role_id"`
+	PolicyID       string `gorm:"type:varchar(50);not null" json:"policy_id"`
+	OrganizationID string `gorm:"type:varchar(50);not null" json:"organization_id"`
 
-	RoleModel   postgres_roles.RoleModel      `gorm:"foreignKey:RoleID;references:ID" json:"role"`
-	PolicyModel postgres_policies.PolicyModel `gorm:"foreignKey:PolicyID;references:ID" json:"policy"`
+	Organization *organizations_gorm.OrganizationModel `gorm:"foreignKey:OrganizationID"`
+	RoleModel    postgres_roles.RoleModel              `gorm:"foreignKey:RoleID;references:ID" json:"role"`
+	PolicyModel  postgres_policies.PolicyModel         `gorm:"foreignKey:PolicyID;references:ID" json:"policy"`
 }
 
 func (RolePoliciesModel) TableName() string {
@@ -35,11 +42,15 @@ func (RolePoliciesModel) TableName() string {
 	return settings.Settings.DB_SCHEMA + ".role_policies"
 }
 
-func (c RolePoliciesModel) GetID() string {
+func (c RolePoliciesModel) GetID() uuid.UUID {
 	return c.ID
 }
 
 func (m *RolePoliciesModel) BeforeCreate(tx *gorm.DB) (err error) {
-	m.ID = fmt.Sprintf("%s_%s", m.TableName()[:3], uuid.New().String())
+	idx, err := utils.NewUUIDx(settings.Settings.UUID_MODULE, ENTITY_ROLE_POLICIES_CODE)
+	if err != nil {
+		return err
+	}
+	m.ID = idx.UUID()
 	return m.Model.BeforeCreate(tx)
 }

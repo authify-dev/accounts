@@ -3,14 +3,18 @@ package postgres
 import (
 	"accounts/internal/api/v1/refresh_tokens/domain/entities"
 	"accounts/internal/core/settings"
-	"accounts/internal/db/postgres"
 	postgres_login_methods "accounts/internal/db/postgres/login_methods"
 	postgres_users "accounts/internal/db/postgres/users"
-	"fmt"
+	"foundation/infrastructure/db/cgorm"
+	"foundation/utils"
 	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+)
+
+const (
+	ENTITY_REFRESH_TOKEN_CODE = "0b"
 )
 
 // --------------------------------
@@ -21,7 +25,7 @@ import (
 
 // RefreshTokenModel utiliza Model parametrizado con User.
 type RefreshTokenModel struct {
-	postgres.Model[entities.RefreshToken]
+	cgorm.Model[entities.RefreshToken]
 	UserID        string `gorm:"type:varchar(50);not null" json:"user_id"`
 	LoginMethodID string `gorm:"type:varchar(50);not null" json:"login_method_id,omitempty"`
 	ExternalID    string `gorm:"type:varchar(50);not null" json:"external_id,omitempty"`
@@ -42,11 +46,16 @@ func (RefreshTokenModel) TableName() string {
 	return settings.Settings.DB_SCHEMA + ".refresh_tokens"
 }
 
-func (c RefreshTokenModel) GetID() string {
+func (c RefreshTokenModel) GetID() uuid.UUID {
 	return c.ID
 }
 
 func (m *RefreshTokenModel) BeforeCreate(tx *gorm.DB) (err error) {
-	m.ID = fmt.Sprintf("%s_%s", m.TableName()[:3], uuid.New().String())
+	idx, err := utils.NewUUIDx(settings.Settings.UUID_MODULE, ENTITY_REFRESH_TOKEN_CODE)
+	if err != nil {
+		return err
+	}
+	_id := idx.UUID()
+	m.ID = _id
 	return m.Model.BeforeCreate(tx)
 }

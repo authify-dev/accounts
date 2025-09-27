@@ -6,8 +6,8 @@ import (
 
 	logins "accounts/internal/api/v1/login_methods/domain/repositories"
 	"accounts/internal/common/logger"
-	"accounts/internal/utils"
 	"context"
+	"foundation/utils"
 )
 
 type CreateLoginStep struct {
@@ -49,11 +49,10 @@ func (s *CreateLoginStep) Call(ctx context.Context, payload utils.Result[any], a
 		return utils.Result[any]{Err: result.Err}
 	}
 
-	s.login_id = result.Data
-	login.ID = result.Data
+	s.login_id = result.Data.ID.String()
 
 	return utils.Result[any]{
-		Data: login,
+		Data: result.Data,
 	}
 }
 

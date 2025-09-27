@@ -3,15 +3,17 @@ package services
 import (
 	"accounts/internal/api/v1/emails/domain/entities"
 	"accounts/internal/common/logger"
-	"accounts/internal/core/domain/criteria"
-	"accounts/internal/utils"
 	"context"
+	"foundation/domain/criteria"
+	"foundation/utils"
+	"foundation/utils/cerrs"
+	"net/http"
 )
 
 func (s *RefreshTokensService) Create(
 	ctx context.Context,
 	refresh_token string,
-) utils.Responses[entities.SignInResponse] {
+) utils.Response[entities.SignInResponse] {
 
 	entry := logger.FromContext(ctx)
 
@@ -20,9 +22,9 @@ func (s *RefreshTokensService) Create(
 	claim, err := s.jwt_controller.ValidateToken(ctx, refresh_token)
 	if err != nil {
 		entry.Error("Failed to validate token", err)
-		return utils.Responses[entities.SignInResponse]{
+		return utils.Response[entities.SignInResponse]{
 			StatusCode: 401,
-			Err:        err,
+			Error:      cerrs.NewCustomError(http.StatusUnauthorized, "Failed to validate token", "refresh_tokens.create.failed_to_validate_token"),
 		}
 	}
 
@@ -46,17 +48,17 @@ func (s *RefreshTokensService) Create(
 
 	if err != nil {
 		entry.Error("Failed to get refresh token", err)
-		return utils.Responses[entities.SignInResponse]{
+		return utils.Response[entities.SignInResponse]{
 			StatusCode: 500,
-			Errors:     []string{err.Error()},
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "Failed to get refresh token", "refresh_tokens.create.failed_to_get_refresh_token"),
 		}
 	}
 
 	if len(refresh_ents) == 0 {
 		entry.Error("Refresh token not found")
-		return utils.Responses[entities.SignInResponse]{
+		return utils.Response[entities.SignInResponse]{
 			StatusCode: 404,
-			Errors:     []string{"refresh token not found"},
+			Error:      cerrs.NewCustomError(http.StatusNotFound, "Refresh token not found", "refresh_tokens.create.refresh_token_not_found"),
 		}
 	}
 
@@ -83,17 +85,17 @@ func (s *RefreshTokensService) Create(
 	login_ents, err := s.login_methods_repository.Matching(cri_login)
 	if err != nil {
 		entry.Error("Failed to get login method", err)
-		return utils.Responses[entities.SignInResponse]{
+		return utils.Response[entities.SignInResponse]{
 			StatusCode: 500,
-			Errors:     []string{err.Error()},
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "Failed to get login method", "refresh_tokens.create.failed_to_get_login_method"),
 		}
 	}
 
 	if len(login_ents) == 0 {
 		entry.Error("Login method not found")
-		return utils.Responses[entities.SignInResponse]{
+		return utils.Response[entities.SignInResponse]{
 			StatusCode: 404,
-			Errors:     []string{"login method not found"},
+			Error:      cerrs.NewCustomError(http.StatusNotFound, "Login method not found", "refresh_tokens.create.login_method_not_found"),
 		}
 	}
 
@@ -101,9 +103,9 @@ func (s *RefreshTokensService) Create(
 
 	jwt := login_method_entity.ToJWT(ctx, s.jwt_controller)
 
-	return utils.Responses[entities.SignInResponse]{
+	return utils.Response[entities.SignInResponse]{
 		StatusCode: 201,
-		Body: entities.SignInResponse{
+		Data: entities.SignInResponse{
 			JWT:          jwt,
 			RefreshToken: refresh_token,
 		},

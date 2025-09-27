@@ -2,8 +2,8 @@ package repositories
 
 import (
 	"accounts/internal/api/v1/pending_registrations/domain/entities"
-	"accounts/internal/core/domain/criteria"
-	"accounts/internal/utils"
+	"foundation/domain/criteria"
+	"foundation/utils"
 )
 
 // --------------------------------
@@ -13,7 +13,7 @@ import (
 // --------------------------------
 
 type PendingRegistrationsRepository interface {
-	Save(role entities.PendingRegistration) utils.Either[string]
+	Save(role entities.PendingRegistration) utils.Result[entities.PendingRegistration]
 	Search(uuid string) (entities.PendingRegistration, error)
 	SearchAll() ([]entities.PendingRegistration, error)
 	Delete(uuid string) error

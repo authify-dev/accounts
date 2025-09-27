@@ -2,8 +2,8 @@ package postgres
 
 import (
 	"accounts/internal/api/v1/pending_registrations/domain/entities"
-	"accounts/internal/core/domain/criteria"
-	"accounts/internal/db/postgres"
+	"foundation/domain/criteria"
+	"foundation/infrastructure/db/cgorm"
 
 	"gorm.io/gorm"
 )
@@ -15,12 +15,12 @@ import (
 // --------------------------------
 
 type PendingRegistrationsPostgresRepository struct {
-	postgres.PostgresRepository[entities.PendingRegistration, PendingRegistrationModel]
+	cgorm.PostgresRepository[entities.PendingRegistration, PendingRegistrationModel]
 }
 
 func NewPendingRegistrationsPostgresRepository(connection *gorm.DB) *PendingRegistrationsPostgresRepository {
 	return &PendingRegistrationsPostgresRepository{
-		PostgresRepository: postgres.PostgresRepository[entities.PendingRegistration, PendingRegistrationModel]{
+		PostgresRepository: cgorm.PostgresRepository[entities.PendingRegistration, PendingRegistrationModel]{
 			Connection: connection,
 		},
 	}

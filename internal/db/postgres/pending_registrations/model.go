@@ -3,12 +3,16 @@ package postgres
 import (
 	"accounts/internal/api/v1/pending_registrations/domain/entities"
 	"accounts/internal/core/settings"
-	"accounts/internal/db/postgres"
 	postgres_codes "accounts/internal/db/postgres/codes"
-	"fmt"
+	"foundation/infrastructure/db/cgorm"
+	"foundation/utils"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+)
+
+const (
+	ENTITY_PENDING_REGISTRATION_CODE = "0a"
 )
 
 // --------------------------------
@@ -19,7 +23,7 @@ import (
 
 // PendingRegistrationModel utiliza Model parametrizado con User.
 type PendingRegistrationModel struct {
-	postgres.Model[entities.PendingRegistration]
+	cgorm.Model[entities.PendingRegistration]
 
 	Email    string `gorm:"type:varchar(255);not null" json:"email"`
 	UserName string `gorm:"type:varchar(255);not null" json:"user_name"`
@@ -40,11 +44,16 @@ func (PendingRegistrationModel) TableName() string {
 	return settings.Settings.DB_SCHEMA + ".pending_registrations"
 }
 
-func (c PendingRegistrationModel) GetID() string {
+func (c PendingRegistrationModel) GetID() uuid.UUID {
 	return c.ID
 }
 
 func (m *PendingRegistrationModel) BeforeCreate(tx *gorm.DB) (err error) {
-	m.ID = fmt.Sprintf("%s_%s", m.TableName()[:3], uuid.New().String())
+	idx, err := utils.NewUUIDx(settings.Settings.UUID_MODULE, ENTITY_PENDING_REGISTRATION_CODE)
+	if err != nil {
+		return err
+	}
+	_id := idx.UUID()
+	m.ID = _id
 	return m.Model.BeforeCreate(tx)
 }

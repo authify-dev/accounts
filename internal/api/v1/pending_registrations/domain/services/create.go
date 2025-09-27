@@ -8,18 +8,18 @@ import (
 	users_entities "accounts/internal/api/v1/users/domain/entities"
 	"accounts/internal/common/logger"
 	"accounts/internal/core/domain"
-	"accounts/internal/core/domain/criteria"
 	"accounts/internal/core/domain/event"
-	"accounts/internal/utils"
 	"context"
-	"fmt"
+	"foundation/domain/criteria"
+	"foundation/utils"
+	"foundation/utils/cerrs"
 	"log"
 	"math/rand"
 	"net/http"
 	"time"
 )
 
-func (s *PendingRegistrationsService) Create(ctx context.Context, command commands.CreatePendingRegistrationCommand) utils.Responses[string] {
+func (s *PendingRegistrationsService) Create(ctx context.Context, command commands.CreatePendingRegistrationCommand) utils.Response[string] {
 
 	entry := logger.FromContext(ctx)
 
@@ -41,17 +41,17 @@ func (s *PendingRegistrationsService) Create(ctx context.Context, command comman
 	roles, err := s.rolesRepository.Matching(cri)
 	if err != nil {
 		entry.Error("Error getting roles", "error", err)
-		return utils.Responses[string]{
+		return utils.Response[string]{
 			StatusCode: http.StatusInternalServerError,
-			Err:        fmt.Errorf("error getting roles %s", err.Error()),
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "Error getting roles", "pending_registrations.create.error_getting_roles"),
 		}
 	}
 
 	if len(roles) == 0 {
 		entry.Error("Role not found")
-		return utils.Responses[string]{
+		return utils.Response[string]{
 			StatusCode: http.StatusNotFound,
-			Err:        fmt.Errorf("role not found %s", command.Role),
+			Error:      cerrs.NewCustomError(http.StatusNotFound, "Role not found", "pending_registrations.create.role_not_found"),
 		}
 	}
 
@@ -60,15 +60,15 @@ func (s *PendingRegistrationsService) Create(ctx context.Context, command comman
 	user := users_entities.User{
 		UserName: command.UserName,
 		Role:     command.Role,
-		RoleID:   roles[0].ID,
+		RoleID:   roles[0].ID.String(),
 	}
 
 	result := s.usersRepository.Save(user)
 	if result.Err != nil {
 		entry.Error("Error saving user", "error", result.Err)
-		return utils.Responses[string]{
+		return utils.Response[string]{
 			StatusCode: http.StatusInternalServerError,
-			Err:        fmt.Errorf("error saving user %s", result.Err.Error()),
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "Error saving user", "pending_registrations.create.error_saving_user"),
 		}
 	}
 
@@ -77,46 +77,46 @@ func (s *PendingRegistrationsService) Create(ctx context.Context, command comman
 		Entity: domain.Entity{},
 		Code:   generateCode(6),
 		Type:   "registration",
-		UserID: result.Data,
+		UserID: result.Data.ID.String(),
 	}
 
-	result = s.codeRepository.Save(code)
-	if result.Err != nil {
-		entry.Error("Error saving code", "error", result.Err)
-		return utils.Responses[string]{
+	resultCode := s.codeRepository.Save(code)
+	if resultCode.Err != nil {
+		entry.Error("Error saving code", "error", resultCode.Err)
+		return utils.Response[string]{
 			StatusCode: http.StatusInternalServerError,
-			Err:        fmt.Errorf("error saving code %s", result.Err.Error()),
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "Error saving code", "pending_registrations.create.error_saving_code"),
 		}
 	}
 
-	code.ID = result.Data
+	code.ID = resultCode.Data.ID
 
 	// Crear el pending registration
 	pendingRegistration := pending_registrations_entities.PendingRegistration{
 		Email:    command.Email,
 		UserName: command.UserName,
 		Role:     command.Role,
-		CodeID:   code.ID,
+		CodeID:   code.ID.String(),
 	}
 
-	result = s.repository.Save(pendingRegistration)
-	if result.Err != nil {
-		entry.Error("Error saving pending registration", "error", result.Err)
-		return utils.Responses[string]{
+	resultPendingRegistration := s.repository.Save(pendingRegistration)
+	if resultPendingRegistration.Err != nil {
+		entry.Error("Error saving pending registration", "error", resultPendingRegistration.Err)
+		return utils.Response[string]{
 			StatusCode: http.StatusInternalServerError,
-			Err:        fmt.Errorf("error saving pending registration %s", result.Err.Error()),
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "Error saving pending registration", "pending_registrations.create.error_saving_pending_registration"),
 		}
 	}
 
-	pendingRegistration.ID = result.Data
+	pendingRegistration.ID = resultPendingRegistration.Data.ID
 
 	entry.Info("Pending registration created successfully", "pendingRegistration", pendingRegistration)
 
 	// Enviar el email
 	s.publishValidateRegistrationEvent(command.Email, command.UserName, code.Code)
 
-	return utils.Responses[string]{
-		Body:       "Check your email to validate your registration",
+	return utils.Response[string]{
+		Data:       "Check your email to validate your registration",
 		StatusCode: http.StatusOK,
 	}
 }

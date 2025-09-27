@@ -1,9 +1,9 @@
 package organizations_gorm
 
 import (
-	"accounts/internal/context/v1/organizations/domain/entities"
-	"accounts/internal/core/domain/criteria"
-	"accounts/internal/db/postgres"
+	"accounts/internal/api/v1/organizations/domain/entities"
+	"foundation/domain/criteria"
+	"foundation/infrastructure/db/cgorm"
 
 	"gorm.io/gorm"
 )
@@ -15,12 +15,12 @@ import (
 // --------------------------------
 
 type OrganizationsPostgresRepository struct {
-	postgres.PostgresRepository[entities.Organization, OrganizationModel]
+	cgorm.PostgresRepository[entities.Organization, OrganizationModel]
 }
 
 func NewOrganizationsPostgresRepository(connection *gorm.DB) *OrganizationsPostgresRepository {
 	return &OrganizationsPostgresRepository{
-		PostgresRepository: postgres.PostgresRepository[entities.Organization, OrganizationModel]{
+		PostgresRepository: cgorm.PostgresRepository[entities.Organization, OrganizationModel]{
 			Connection: connection,
 		},
 	}

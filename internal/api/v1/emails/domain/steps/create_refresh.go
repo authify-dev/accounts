@@ -8,8 +8,8 @@ import (
 
 	refresh "accounts/internal/api/v1/refresh_tokens/domain/repositories"
 	"accounts/internal/common/logger"
-	"accounts/internal/utils"
 	"context"
+	"foundation/utils"
 
 	"github.com/google/uuid"
 )
@@ -41,7 +41,7 @@ func (s *CreateRefreshTokenStep) Call(ctx context.Context, payload utils.Result[
 	entity := refresh_tokens_entities.RefreshToken{
 		UserID:        s.user_id,
 		Entity:        domain.Entity{},
-		LoginMethodID: login.ID,
+		LoginMethodID: login.ID.String(),
 		ExternalID:    external_id.String(),
 	}
 
@@ -51,10 +51,10 @@ func (s *CreateRefreshTokenStep) Call(ctx context.Context, payload utils.Result[
 		return utils.Result[any]{Err: result.Err}
 	}
 
-	s.refresh_token_id = result.Data
+	s.refresh_token_id = result.Data.ID.String()
 
 	return utils.Result[any]{
-		Data: entity,
+		Data: result.Data,
 	}
 }
 

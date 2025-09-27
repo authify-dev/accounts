@@ -3,12 +3,16 @@ package postgres
 import (
 	"accounts/internal/api/v1/users/domain/entities"
 	"accounts/internal/core/settings"
-	"accounts/internal/db/postgres"
 	postgres_role "accounts/internal/db/postgres/role"
-	"fmt"
+	"foundation/infrastructure/db/cgorm"
+	"foundation/utils"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+)
+
+const (
+	ENTITY_USER_CODE = "05"
 )
 
 // --------------------------------
@@ -19,7 +23,7 @@ import (
 
 // UserModel utiliza Model parametrizado con User.
 type UserModel struct {
-	postgres.Model[entities.User]
+	cgorm.Model[entities.User]
 	UserName string `gorm:"type:varchar(255);uniqueIndex;not null;" json:"user_name"`
 	Name     string `gorm:"type:varchar(255);" json:"name"`
 
@@ -36,11 +40,18 @@ func (UserModel) TableName() string {
 	return settings.Settings.DB_SCHEMA + ".users"
 }
 
-func (c UserModel) GetID() string {
+func (c UserModel) GetID() uuid.UUID {
 	return c.ID
 }
 
 func (m *UserModel) BeforeCreate(tx *gorm.DB) (err error) {
-	m.ID = fmt.Sprintf("%s_%s", m.TableName()[:3], uuid.New().String())
+	idx, err := utils.NewUUIDx(settings.Settings.UUID_MODULE, ENTITY_USER_CODE)
+	if err != nil {
+		return err
+	}
+	m.ID = idx.UUID()
+	if err != nil {
+		return err
+	}
 	return m.Model.BeforeCreate(tx)
 }

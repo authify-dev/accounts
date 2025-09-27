@@ -1,4 +1,4 @@
-package uuidx
+package utils
 
 import (
 	"encoding/hex"

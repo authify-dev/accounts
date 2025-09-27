@@ -9,7 +9,15 @@ import (
 
 func (c *RolesController) List(ctx *gin.Context) {
 
-	roles, err := c.userService.List()
+	organizationID := ctx.Query("organization_id")
+	if organizationID == "" {
+		ctx.JSON(fiber.StatusBadRequest, responses.Response{
+			Status: fiber.StatusBadRequest,
+			Errors: []string{"organization_id is required"},
+		})
+		return
+	}
+	roles, err := c.userService.List(organizationID)
 	if err != nil {
 		ctx.JSON(fiber.StatusBadRequest, responses.Response{
 			Status: fiber.StatusBadRequest,

@@ -5,12 +5,14 @@ import (
 	email_events "accounts/internal/api/v1/emails/domain/events"
 	"accounts/internal/common/logger"
 	"accounts/internal/core/domain"
-	"accounts/internal/core/domain/criteria"
 	"accounts/internal/core/domain/event"
-	"accounts/internal/utils"
 	"context"
 	"fmt"
+	"foundation/domain/criteria"
+	"foundation/utils"
+	"foundation/utils/cerrs"
 	"log"
+	"net/http"
 	"time"
 
 	logins "accounts/internal/api/v1/login_methods/domain/entities"
@@ -22,7 +24,7 @@ import (
 func (s *EmailsService) Activate(
 	ctx context.Context,
 	entity entities.Activate,
-) utils.Responses[entities.ActivateResponse] {
+) utils.Response[entities.ActivateResponse] {
 
 	criteria_email := criteria.Criteria{
 		Filters: *criteria.NewFilters(
@@ -38,16 +40,16 @@ func (s *EmailsService) Activate(
 
 	emails, err := s.repository.Matching(criteria_email)
 	if err != nil {
-		return utils.Responses[entities.ActivateResponse]{
+		return utils.Response[entities.ActivateResponse]{
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error getting email", "emails.activate.error_getting_email"),
 			StatusCode: 500,
-			Errors:     []string{err.Error()},
 		}
 	}
 
 	if len(emails) == 0 {
-		return utils.Responses[entities.ActivateResponse]{
+		return utils.Response[entities.ActivateResponse]{
+			Error:      cerrs.NewCustomError(http.StatusNotFound, "email not found", "emails.activate.error_email_not_found"),
 			StatusCode: 404,
-			Errors:     []string{"email not found"},
 		}
 	}
 	email := emails[0]
@@ -71,16 +73,16 @@ func (s *EmailsService) Activate(
 
 	logins, err := s.login_methods_repository.Matching(criteria_login)
 	if err != nil {
-		return utils.Responses[entities.ActivateResponse]{
+		return utils.Response[entities.ActivateResponse]{
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error getting login method", "emails.activate.error_getting_login_method"),
 			StatusCode: 500,
-			Errors:     []string{err.Error()},
 		}
 	}
 
 	if len(logins) == 0 {
-		return utils.Responses[entities.ActivateResponse]{
+		return utils.Response[entities.ActivateResponse]{
+			Error:      cerrs.NewCustomError(http.StatusNotFound, "login not found", "emails.activate.error_login_not_found"),
 			StatusCode: 404,
-			Errors:     []string{"login not found"},
 		}
 	}
 
@@ -111,78 +113,78 @@ func (s *EmailsService) Activate(
 
 	codes, err := s.codes_repository.Matching(criteria_code)
 	if err != nil {
-		return utils.Responses[entities.ActivateResponse]{
+		return utils.Response[entities.ActivateResponse]{
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error getting codes", "emails.activate.error_getting_codes"),
 			StatusCode: 500,
-			Errors:     []string{err.Error()},
 		}
 	}
 
 	if len(codes) == 0 {
-		return utils.Responses[entities.ActivateResponse]{
+		return utils.Response[entities.ActivateResponse]{
+			Error:      cerrs.NewCustomError(http.StatusNotFound, "code not found", "emails.activate.error_code_not_found"),
 			StatusCode: 404,
-			Errors:     []string{"code not found"},
 		}
 	}
 
 	code := codes[0]
 
 	if code.Code != entity.Code {
-		return utils.Responses[entities.ActivateResponse]{
+		return utils.Response[entities.ActivateResponse]{
+			Error:      cerrs.NewCustomError(http.StatusBadRequest, "invalid code", "emails.activate.error_invalid_code"),
 			StatusCode: 400,
-			Errors:     []string{"invalid code"},
 		}
 	}
 
-	s.login_methods_repository.UpdateByFields(login.ID, map[string]interface{}{
+	s.login_methods_repository.UpdateByFields(login.ID.String(), map[string]interface{}{
 		"is_verify": true,
 	})
 
 	refreshs_result := s.createRefreshToken(ctx, login)
 
 	if refreshs_result.Err != nil {
-		return utils.Responses[entities.ActivateResponse]{
+		return utils.Response[entities.ActivateResponse]{
+			Error:      refreshs_result.Err,
 			StatusCode: 500,
-			Errors:     []string{refreshs_result.Err.Error()},
 		}
 	}
 
-	s.codes_repository.UpdateByFields(code.ID, map[string]interface{}{
+	s.codes_repository.UpdateByFields(code.ID.String(), map[string]interface{}{
 		"is_removed": true,
 	})
 
 	result := s.generateTokens(ctx, login, refreshs_result.Data)
 
 	if result.Err != nil {
-		return utils.Responses[entities.ActivateResponse]{
+		return utils.Response[entities.ActivateResponse]{
+			Error:      result.Err,
 			StatusCode: 500,
-			Errors:     []string{result.Err.Error()},
 		}
 	}
 
 	s.publishActivationUserEvent(entity.Email, entity.Email)
 
-	return utils.Responses[entities.ActivateResponse]{
+	return utils.Response[entities.ActivateResponse]{
 		StatusCode: 200,
-		Body: entities.ActivateResponse{
+		Data: entities.ActivateResponse{
 			JWT:          result.Data.jwt,
 			RefreshToken: result.Data.refresh_token,
 		},
 	}
 }
 
-func (s EmailsService) generateTokens(ctx context.Context, login logins.LoginMethod, refreshToken refreshs.RefreshToken) utils.Either[GenerateTokensFlow] {
+func (s EmailsService) generateTokens(ctx context.Context, login logins.LoginMethod, refreshToken refreshs.RefreshToken) utils.Result[GenerateTokensFlow] {
 
 	jwt := login.ToJWT(ctx, s.jwt_controller)
 
 	refresh_token := refreshToken.ToJWT(ctx, s.jwt_controller)
 
-	return utils.Either[GenerateTokensFlow]{Data: GenerateTokensFlow{
+	return utils.Result[GenerateTokensFlow]{Data: GenerateTokensFlow{
 		jwt:           jwt,
 		refresh_token: refresh_token,
 	}}
 }
 
-func (s EmailsService) createRefreshToken(ctx context.Context, login logins.LoginMethod) utils.Either[refreshs.RefreshToken] {
+func (s EmailsService) createRefreshToken(ctx context.Context, login logins.LoginMethod) utils.Result[refreshs.RefreshToken] {
 
 	entry := logger.FromContext(ctx)
 
@@ -191,19 +193,19 @@ func (s EmailsService) createRefreshToken(ctx context.Context, login logins.Logi
 	entity := refreshs.RefreshToken{
 		UserID:        login.UserID,
 		Entity:        domain.Entity{},
-		LoginMethodID: login.ID,
+		LoginMethodID: login.ID.String(),
 		ExternalID:    external_id.String(),
 	}
 
 	result := s.refresh_repository.Save(entity)
 	if result.Err != nil {
 		entry.Error("error saving the code")
-		return utils.Either[refreshs.RefreshToken]{Err: result.Err}
+		return utils.Result[refreshs.RefreshToken]{Err: result.Err}
 	}
 
-	entity.ID = result.Data
+	entity.ID = result.Data.ID
 
-	return utils.Either[refreshs.RefreshToken]{
+	return utils.Result[refreshs.RefreshToken]{
 		Data: entity,
 	}
 }

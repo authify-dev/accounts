@@ -5,12 +5,14 @@ import (
 	"accounts/internal/api/v1/emails/domain/entities"
 	login_ents "accounts/internal/api/v1/login_methods/domain/entities"
 	"accounts/internal/common/logger"
-	"accounts/internal/core/domain/criteria"
-	"accounts/internal/utils"
 	"context"
+	"foundation/domain/criteria"
+	"foundation/utils"
+	"foundation/utils/cerrs"
+	"net/http"
 )
 
-func (s EmailsService) SetPassword(ctx context.Context, entity commands.SetPassword, jwt string) utils.Responses[entities.ActivateResponse] {
+func (s EmailsService) SetPassword(ctx context.Context, entity commands.SetPassword, jwt string) utils.Response[entities.ActivateResponse] {
 
 	entry := logger.FromContext(ctx)
 
@@ -19,10 +21,9 @@ func (s EmailsService) SetPassword(ctx context.Context, entity commands.SetPassw
 	// validar el JWT
 	claims, err := s.jwt_controller.ValidateToken(ctx, jwt)
 	if err != nil {
-		return utils.Responses[entities.ActivateResponse]{
+		return utils.Response[entities.ActivateResponse]{
+			Error:      cerrs.NewCustomError(http.StatusUnauthorized, "invalid token", "emails.set_password.error_invalid_token"),
 			StatusCode: 401,
-			Errors:     []string{err.Error()},
-			Success:    false,
 		}
 	}
 
@@ -53,18 +54,16 @@ func (s EmailsService) SetPassword(ctx context.Context, entity commands.SetPassw
 
 	pending_registrations, err := s.pending_registrations_repository.Matching(cri)
 	if err != nil {
-		return utils.Responses[entities.ActivateResponse]{
+		return utils.Response[entities.ActivateResponse]{
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error getting pending registration", "emails.set_password.error_getting_pending_registration"),
 			StatusCode: 500,
-			Errors:     []string{err.Error()},
-			Success:    false,
 		}
 	}
 
 	if len(pending_registrations) == 0 {
-		return utils.Responses[entities.ActivateResponse]{
+		return utils.Response[entities.ActivateResponse]{
+			Error:      cerrs.NewCustomError(http.StatusNotFound, "pending registration not found", "emails.set_password.error_pending_registration_not_found"),
 			StatusCode: 404,
-			Errors:     []string{"pending registration not found"},
-			Success:    false,
 		}
 	}
 
@@ -79,16 +78,15 @@ func (s EmailsService) SetPassword(ctx context.Context, entity commands.SetPassw
 
 	emailResult := s.repository.Save(email)
 	if emailResult.Err != nil {
-		return utils.Responses[entities.ActivateResponse]{
+		return utils.Response[entities.ActivateResponse]{
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error saving email", "emails.set_password.error_saving_email"),
 			StatusCode: 500,
-			Errors:     []string{emailResult.Err.Error()},
-			Success:    false,
 		}
 	}
 
 	// creamos un login method vinculando el email y le user
 	login_method := login_ents.LoginMethod{
-		EntityID:   emailResult.Data,
+		EntityID:   emailResult.Data.ID.String(),
 		EntityType: "email",
 		UserID:     user_id,
 		IsActive:   true,
@@ -97,22 +95,20 @@ func (s EmailsService) SetPassword(ctx context.Context, entity commands.SetPassw
 
 	login_method_result := s.login_methods_repository.Save(login_method)
 	if login_method_result.Err != nil {
-		return utils.Responses[entities.ActivateResponse]{
+		return utils.Response[entities.ActivateResponse]{
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error saving login method", "emails.set_password.error_saving_login_method"),
 			StatusCode: 500,
-			Errors:     []string{login_method_result.Err.Error()},
-			Success:    false,
 		}
 	}
 
-	login_method.ID = login_method_result.Data
+	login_method.ID = login_method_result.Data.ID
 
 	// creamos el refresh token
 	refresh_token := s.createRefreshToken(ctx, login_method)
 	if refresh_token.Err != nil {
-		return utils.Responses[entities.ActivateResponse]{
+		return utils.Response[entities.ActivateResponse]{
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error creating refresh token", "emails.set_password.error_creating_refresh_token"),
 			StatusCode: 500,
-			Errors:     []string{refresh_token.Err.Error()},
-			Success:    false,
 		}
 	}
 
@@ -123,17 +119,17 @@ func (s EmailsService) SetPassword(ctx context.Context, entity commands.SetPassw
 	result := s.generateTokens(ctx, login_method, refresh_token.Data)
 
 	if result.Err != nil {
-		return utils.Responses[entities.ActivateResponse]{
+		return utils.Response[entities.ActivateResponse]{
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error generating tokens", "emails.set_password.error_generating_tokens"),
 			StatusCode: 500,
-			Errors:     []string{result.Err.Error()},
 		}
 	}
 
 	s.publishActivationUserEvent(entity.Email, entity.Email)
 
-	return utils.Responses[entities.ActivateResponse]{
+	return utils.Response[entities.ActivateResponse]{
 		StatusCode: 200,
-		Body: entities.ActivateResponse{
+		Data: entities.ActivateResponse{
 			JWT:          result.Data.jwt,
 			RefreshToken: result.Data.refresh_token,
 		},

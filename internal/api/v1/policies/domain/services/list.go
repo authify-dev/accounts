@@ -2,8 +2,8 @@ package services
 
 import (
 	"accounts/internal/api/v1/policies/domain/entities"
-	"accounts/internal/core/domain/criteria"
 	"context"
+	"foundation/domain/criteria"
 )
 
 func (s *PoliciesService) List(ctx context.Context, organizationID string) ([]entities.PolicyEntity, error) {
