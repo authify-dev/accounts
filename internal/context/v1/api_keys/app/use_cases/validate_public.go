@@ -1,7 +1,6 @@
 package usecases
 
 import (
-	common_repositories "accounts/internal/common/domain/repositories"
 	"accounts/internal/context/v1/api_keys/domain/entities"
 	"accounts/internal/context/v1/api_keys/domain/repositories"
 	"foundation/domain/criteria"
@@ -14,16 +13,13 @@ import (
 
 type ValidatePublicAPIKeyUseCase struct {
 	apiKeyRepository repositories.APIKeyRepository
-	verifier         common_repositories.SecretVerifier
 }
 
 func NewValidatePublicAPIKeyUseCase(
 	apiKeyRepository repositories.APIKeyRepository,
-	verifier common_repositories.SecretVerifier,
 ) *ValidatePublicAPIKeyUseCase {
 	return &ValidatePublicAPIKeyUseCase{
 		apiKeyRepository: apiKeyRepository,
-		verifier:         verifier,
 	}
 }
 
