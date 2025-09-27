@@ -1,9 +1,9 @@
 package main
 
 import (
-	organization_entities "accounts/internal/api/v1/organizations/domain/entities"
 	role_entities "accounts/internal/api/v1/roles/domain/entities"
 	"accounts/internal/api/v1/roles/domain/repositories"
+	organization_entities "accounts/internal/context/v1/organizations/domain/entities"
 	"accounts/internal/core/settings"
 	postgres_organizations "accounts/internal/db/postgres/organinizations"
 	postgres_role "accounts/internal/db/postgres/role"
