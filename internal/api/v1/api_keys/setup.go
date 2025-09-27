@@ -3,8 +3,7 @@ package apikeys
 import (
 	"accounts/internal/api/middlewares"
 	"accounts/internal/api/v1/api_keys/interface/controllers"
-	api_keys_controllers "accounts/internal/common/controllers"
-	verifier "accounts/internal/common/controllers"
+	common_controllers "accounts/internal/common/controllers"
 	usecases "accounts/internal/context/v1/api_keys/app/use_cases"
 	"accounts/internal/core/settings"
 	apikeys_gorm "accounts/internal/db/postgres/api_keys"
@@ -17,8 +16,8 @@ import (
 func SetupAPIKeysModule(router *gin.Engine, db *gorm.DB) {
 
 	// Clients
-	generatorAPIKey := api_keys_controllers.NewGeneratorAPIKey(48, "live")
-	verifier := verifier.NewArgon2idCrypto([]byte("pepper")) // TODO: get from env
+	generatorAPIKey := common_controllers.NewGeneratorAPIKey(48, "live")
+	verifier := common_controllers.NewArgon2idCrypto([]byte("pepper")) // TODO: get from env
 
 	// Repositories
 	apiKeyRepository := apikeys_gorm.NewAPIKeyPostgresRepository(db)
