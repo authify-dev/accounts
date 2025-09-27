@@ -1,36 +1,45 @@
 package controllers
 
 import (
-	"accounts/internal/common/responses"
+	"accounts/internal/api/v1/roles/domain/entities"
+	"accounts/internal/common/logger"
+	"foundation/domain/customctx"
+	"foundation/utils"
+	"foundation/utils/cerrs"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gofiber/fiber/v2"
 )
 
 func (c *RolesController) List(ctx *gin.Context) {
 
+	cc := customctx.NewCustomContext(ctx.Request.Context())
+
+	entry := logger.FromContext(cc.Context())
+
+	entry.Info("Listing roles")
+
 	organizationID := ctx.Query("organization_id")
 	if organizationID == "" {
-		ctx.JSON(fiber.StatusBadRequest, responses.Response{
-			Status: fiber.StatusBadRequest,
-			Errors: []string{"organization_id is required"},
-		})
-		return
-	}
-	roles, err := c.roles_service.List(organizationID)
-	if err != nil {
-		ctx.JSON(fiber.StatusBadRequest, responses.Response{
-			Status: fiber.StatusBadRequest,
-			Errors: []string{err.Error()},
+		ctx.JSON(http.StatusBadRequest, utils.Response[entities.Role]{
+			StatusCode: http.StatusBadRequest,
+			Error: cc.NewError(
+				cerrs.NewCustomError(
+					http.StatusBadRequest,
+					"organization_id is required",
+					"roles.list.error_listing_roles",
+				),
+			),
+			Success: false,
 		})
 		return
 	}
 
-	customResponse := responses.Response{
-		Status: fiber.StatusOK,
-		Data:   roles,
+	res := c.roles_service.List(cc, organizationID)
+	if res.Error != nil {
+		ctx.JSON(res.StatusCode, res.ToMapWithCustomContext(cc))
+		return
 	}
 
-	// Se almacena el objeto para que el middleware lo procese
-	ctx.JSON(fiber.StatusOK, customResponse)
+	ctx.JSON(res.StatusCode, res.ToMapWithCustomContext(cc))
 }
