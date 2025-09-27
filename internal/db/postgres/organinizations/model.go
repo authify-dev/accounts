@@ -1,7 +1,7 @@
 package organizations_gorm
 
 import (
-	"accounts/internal/api/v1/organizations/domain/entities"
+	"accounts/internal/context/v1/organizations/domain/entities"
 	"accounts/internal/core/settings"
 	"foundation/infrastructure/db/cgorm"
 	"foundation/utils"
@@ -16,11 +16,11 @@ const (
 
 // OrganizationModel representa el modelo de datos para la entidad Organization.
 type OrganizationModel struct {
-	// Se asume que postgres.Model es un struct genérico que contiene campos comunes (como ID).
 	cgorm.Model[entities.Organization]
 
-	// RootUserID es el identificador del usuario raíz de la organización.
-	RootUserID string `gorm:"type:varchar(50);not null" json:"root_user_id,omitempty"`
+	Name string `gorm:"type:varchar(255);not null;uniqueIndex:uniq_root_user_name,priority:2" json:"name"`
+
+	RootUserID string `gorm:"type:varchar(50);not null;uniqueIndex:uniq_root_user_name,priority:1" json:"root_user_id"`
 }
 
 // TableName especifica el nombre de la tabla en la base de datos.

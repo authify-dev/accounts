@@ -1,7 +1,7 @@
 package organizations_gorm
 
 import (
-	"accounts/internal/api/v1/organizations/domain/entities"
+	"accounts/internal/context/v1/organizations/domain/entities"
 	"foundation/domain/criteria"
 	"foundation/infrastructure/db/cgorm"
 
