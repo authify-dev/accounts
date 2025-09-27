@@ -1,7 +1,8 @@
 package organizations_use_cases
 
 import (
-	"accounts/internal/api/v1/organizations/domain/entities"
+	"accounts/internal/context/v1/organizations/domain/commands"
+	"accounts/internal/context/v1/organizations/domain/entities"
 	organizations_gorm "accounts/internal/db/postgres/organinizations"
 	"foundation/domain/customctx"
 	"foundation/utils"
@@ -16,15 +17,17 @@ func NewCreateOrganizationsUseCase(repository *organizations_gorm.OrganizationsP
 	return &CreateOrganizationsUseCase{repository: repository}
 }
 
-func (u *CreateOrganizationsUseCase) Execute(cc *customctx.CustomContext) utils.Response[entities.Organization] {
+func (u *CreateOrganizationsUseCase) Execute(cc *customctx.CustomContext, command commands.CreateOrganizationCommand) utils.Response[entities.Organization] {
 
-	organization := entities.Organization{
-		Name:       "Organization 1",
-		RootUserID: "a1b21503-ca17-4188-9395-22f04da91f27",
+	res := u.repository.Save(command.ToEntity())
+
+	if res.Err != nil {
+		return utils.Response[entities.Organization]{
+			Success:    false,
+			StatusCode: res.Err.GetCode(),
+			Error:      cc.NewError(res.Err),
+		}
 	}
-
-	res := u.repository.Save(organization)
-
 	return utils.Response[entities.Organization]{
 		Data:       res.Data,
 		Success:    true,

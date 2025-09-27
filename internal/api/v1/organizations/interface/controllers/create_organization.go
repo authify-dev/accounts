@@ -1,9 +1,11 @@
 package organizations_controllers
 
 import (
+	"accounts/internal/api/v1/organizations/interface/dtos"
 	organizations_use_cases "accounts/internal/context/v1/organizations/app/use_cases"
 	"foundation/domain/customctx"
 	"foundation/domain/logger"
+	"foundation/interface/cdtos"
 
 	"github.com/gin-gonic/gin"
 )
@@ -24,7 +26,13 @@ func (c *CreateOrganizationController) Handle(ctx *gin.Context) {
 
 	cc := customctx.NewCustomContext(ctx.Request.Context())
 
-	res := c.service.Execute(cc)
+	dto := cdtos.GetDTOWithResponse[dtos.CreateOrganizationDTO](ctx, cc)
+	if dto.Error != nil {
+		ctx.JSON(dto.StatusCode, dto.ToMapWithCustomContext(cc))
+		return
+	}
+
+	res := c.service.Execute(cc, dto.Data.ToCommand())
 
 	ctx.JSON(res.StatusCode, res.ToMapWithCustomContext(cc))
 }
