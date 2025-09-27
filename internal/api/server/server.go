@@ -3,6 +3,7 @@ package server
 import (
 	"accounts/internal/api/health"
 	"accounts/internal/api/router"
+	apikeys "accounts/internal/api/v1/api_keys"
 	"accounts/internal/api/v1/emails"
 	"accounts/internal/api/v1/oauth_logins"
 	"accounts/internal/api/v1/organizations"
@@ -63,5 +64,6 @@ func setUpRouter() *gin.Engine {
 	policies.SetupPoliciesModule(app, db)
 	role_policies.SetupRolePoliciesModule(app, db)
 	organizations.SetupOrganizationsModule(app, db)
+	apikeys.SetupAPIKeysModule(app, db)
 	return app
 }
