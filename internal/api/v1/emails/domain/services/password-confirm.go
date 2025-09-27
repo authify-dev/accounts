@@ -1,12 +1,14 @@
 package services
 
 import (
+	"accounts/internal/api/v1/emails/domain/commands"
 	"accounts/internal/api/v1/emails/domain/entities"
 	email_events "accounts/internal/api/v1/emails/domain/events"
 	"accounts/internal/common/logger"
 	"accounts/internal/core/domain/event"
 	"context"
 	"foundation/domain/criteria"
+	"foundation/domain/customctx"
 	"foundation/utils"
 	"foundation/utils/cerrs"
 	"log"
@@ -18,15 +20,15 @@ import (
 )
 
 func (s *EmailsService) ConfirmPassword(
-	ctx context.Context,
-	entity entities.ConfirmPassword,
+	cc *customctx.CustomContext,
+	command commands.ConfirmPassword,
 ) utils.Response[entities.ResetPasswordResponse] {
 	// Logger
-	entry := logger.FromContext(ctx)
+	entry := logger.FromContext(cc.Context())
 	entry.Info("Confirm Password")
 
 	// Get email entity
-	email := s.getEmail(ctx, entity.Email)
+	email := s.getEmail(cc.Context(), command.Email, command.OrganizationID)
 	if email.Err != nil {
 		entry.Error("Error al obtener el email")
 		return utils.Response[entities.ResetPasswordResponse]{
@@ -36,7 +38,7 @@ func (s *EmailsService) ConfirmPassword(
 	}
 
 	// Check if the code is valid
-	code := s.verifyCode(ctx, email.Data.UserID, "reset_password", entity.Code)
+	code := s.verifyCode(cc.Context(), email.Data.UserID, "reset_password", command.Code, command.OrganizationID)
 	if code.Err != nil {
 		entry.Error("Error al verificar el codigo")
 		return utils.Response[entities.ResetPasswordResponse]{
@@ -46,7 +48,7 @@ func (s *EmailsService) ConfirmPassword(
 	}
 
 	// Get login method
-	login := s.getLoginMethod(ctx, email.Data.ID.String())
+	login := s.getLoginMethod(cc.Context(), email.Data.ID.String(), command.OrganizationID)
 	if login.Err != nil {
 		entry.Error("Error al obtener el login method")
 		return utils.Response[entities.ResetPasswordResponse]{
@@ -77,7 +79,7 @@ func (s *EmailsService) ConfirmPassword(
 		}
 	}
 
-	pass_hashed, err := s.password_controller.HashPassword(entity.Password)
+	pass_hashed, err := s.password_controller.HashPassword(command.Password)
 	if err != nil {
 		entry.Error("Error al hashear la contraseña")
 		return utils.Response[entities.ResetPasswordResponse]{
@@ -98,7 +100,7 @@ func (s *EmailsService) ConfirmPassword(
 		}
 	}
 
-	s.publishChangedPasswordEvent(email.Data.Email, email.Data.Email)
+	s.publishChangedPasswordEvent(command.Email, email.Data.Email)
 
 	return utils.Response[entities.ResetPasswordResponse]{
 		StatusCode: 200,
@@ -112,6 +114,7 @@ func (s *EmailsService) ConfirmPassword(
 func (s *EmailsService) getLoginMethod(
 	ctx context.Context,
 	email_id string,
+	organization_id string,
 ) utils.Result[login_ents.LoginMethod] {
 	// Logger
 	entry := logger.FromContext(ctx)
@@ -128,6 +131,11 @@ func (s *EmailsService) getLoginMethod(
 				{
 					Field:    "entity_type",
 					Value:    "email",
+					Operator: criteria.OperatorEqual,
+				},
+				{
+					Field:    "organization_id",
+					Value:    organization_id,
 					Operator: criteria.OperatorEqual,
 				},
 			},
@@ -161,6 +169,7 @@ func (s *EmailsService) verifyCode(
 	user_id string,
 	type_code string,
 	code string,
+	organization_id string,
 ) utils.Result[code_ents.Code] {
 	// Logger
 	entry := logger.FromContext(ctx)
@@ -187,6 +196,11 @@ func (s *EmailsService) verifyCode(
 				{
 					Field:    "type",
 					Value:    type_code,
+					Operator: criteria.OperatorEqual,
+				},
+				{
+					Field:    "organization_id",
+					Value:    organization_id,
 					Operator: criteria.OperatorEqual,
 				},
 			},
@@ -222,7 +236,7 @@ func (s *EmailsService) verifyCode(
 	}
 }
 
-func (s *EmailsService) getEmail(ctx context.Context, email string) utils.Result[entities.Email] {
+func (s *EmailsService) getEmail(ctx context.Context, email string, organization_id string) utils.Result[entities.Email] {
 
 	// Logger
 	entry := logger.FromContext(ctx)
@@ -235,6 +249,11 @@ func (s *EmailsService) getEmail(ctx context.Context, email string) utils.Result
 				{
 					Field:    "email",
 					Value:    email,
+					Operator: criteria.OperatorEqual,
+				},
+				{
+					Field:    "organization_id",
+					Value:    organization_id,
 					Operator: criteria.OperatorEqual,
 				},
 			},

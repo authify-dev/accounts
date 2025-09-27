@@ -1,6 +1,7 @@
 package dtos
 
 import (
+	"accounts/internal/api/v1/emails/domain/commands"
 	"encoding/json"
 )
 
@@ -21,4 +22,11 @@ func (dto SignInDTO) ToJson() []byte {
 	}
 
 	return data
+}
+
+func (dto SignInDTO) ToCommand() commands.SignIn {
+	return commands.SignIn{
+		Email:    dto.Email,
+		Password: dto.Password,
+	}
 }

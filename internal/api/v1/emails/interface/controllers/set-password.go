@@ -3,31 +3,47 @@ package controllers
 import (
 	"accounts/internal/api/v1/emails/interface/dtos"
 	"accounts/internal/common/logger"
-	"accounts/internal/common/requests"
+	"foundation/domain/customctx"
+	"foundation/interface/cdtos"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 func (c *EmailsController) SetPassword(ctx *gin.Context) {
 
-	entry := logger.FromContext(ctx)
+	cc := customctx.NewCustomContext(ctx.Request.Context())
 
-	dto := requests.GetDTO[dtos.SetPasswordDTO](ctx)
+	entry := logger.FromContext(cc.Context())
 
-	if dto == nil {
-		entry.Error("Error al parsear el JSON")
+	entry.Info("SetPassword Controller")
+
+	dto := cdtos.GetDTOWithResponse[dtos.SetPasswordDTO](ctx, cc)
+
+	if dto.Error != nil {
+		ctx.JSON(dto.StatusCode, dto.ToMapWithCustomContext(cc))
 		return
 	}
 
-	command := dto.ToCommand()
+	command := dto.Data.ToCommand()
 
-	token := requests.GetToken(ctx)
-	if token == nil {
-		entry.Error("Failed to get token from request")
+	organizationID, ok := ctx.Get("organization_id")
+
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Organization ID not found",
+		})
 		return
 	}
 
-	response := c.userService.SetPassword(ctx.Request.Context(), command, token.Token)
+	command.OrganizationID = organizationID.(string)
+
+	token := cdtos.GetAuthTokenWithEarlyResponse(ctx, cc)
+	if token.Err != nil {
+		return
+	}
+
+	response := c.userService.SetPassword(cc, command, token.Data)
 	// Se almacena el objeto para que el middleware lo procese
-	ctx.JSON(response.StatusCode, response.ToMap())
+	ctx.JSON(response.StatusCode, response.ToMapWithCustomContext(cc))
 }

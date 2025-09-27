@@ -5,21 +5,25 @@ import (
 	"accounts/internal/api/v1/emails/domain/entities"
 	login_ents "accounts/internal/api/v1/login_methods/domain/entities"
 	"accounts/internal/common/logger"
-	"context"
 	"foundation/domain/criteria"
+	"foundation/domain/customctx"
 	"foundation/utils"
 	"foundation/utils/cerrs"
 	"net/http"
 )
 
-func (s EmailsService) SetPassword(ctx context.Context, entity commands.SetPassword, jwt string) utils.Response[entities.ActivateResponse] {
+func (s EmailsService) SetPassword(
+	cc *customctx.CustomContext,
+	entity commands.SetPassword,
+	jwt string,
+) utils.Response[entities.ActivateResponse] {
 
-	entry := logger.FromContext(ctx)
+	entry := logger.FromContext(cc.Context())
 
-	entry.Info("Setting password", "email", entity.Email)
+	entry.Info("Setting password: ", entity.Email)
 
 	// validar el JWT
-	claims, err := s.jwt_controller.ValidateToken(ctx, jwt)
+	claims, err := s.jwt_controller.ValidateToken(cc.Context(), jwt)
 	if err != nil {
 		return utils.Response[entities.ActivateResponse]{
 			Error:      cerrs.NewCustomError(http.StatusUnauthorized, "invalid token", "emails.set_password.error_invalid_token"),
@@ -48,6 +52,11 @@ func (s EmailsService) SetPassword(ctx context.Context, entity commands.SetPassw
 					Value:    entity.Email,
 					Operator: criteria.OperatorEqual,
 				},
+				{
+					Field:    "organization_id",
+					Value:    entity.OrganizationID,
+					Operator: criteria.OperatorEqual,
+				},
 			},
 		),
 	}
@@ -71,9 +80,10 @@ func (s EmailsService) SetPassword(ctx context.Context, entity commands.SetPassw
 
 	// cxreamos eñ email
 	email := entities.Email{
-		Email:    entity.Email,
-		UserID:   user_id,
-		Password: entity.Password,
+		Email:          entity.Email,
+		UserID:         user_id,
+		Password:       entity.Password,
+		OrganizationID: entity.OrganizationID,
 	}
 
 	emailResult := s.repository.Save(email)
@@ -86,11 +96,12 @@ func (s EmailsService) SetPassword(ctx context.Context, entity commands.SetPassw
 
 	// creamos un login method vinculando el email y le user
 	login_method := login_ents.LoginMethod{
-		EntityID:   emailResult.Data.ID.String(),
-		EntityType: "email",
-		UserID:     user_id,
-		IsActive:   true,
-		IsVerify:   true,
+		EntityID:       emailResult.Data.ID.String(),
+		EntityType:     "email",
+		UserID:         user_id,
+		OrganizationID: entity.OrganizationID,
+		IsActive:       true,
+		IsVerify:       true,
 	}
 
 	login_method_result := s.login_methods_repository.Save(login_method)
@@ -104,7 +115,7 @@ func (s EmailsService) SetPassword(ctx context.Context, entity commands.SetPassw
 	login_method.ID = login_method_result.Data.ID
 
 	// creamos el refresh token
-	refresh_token := s.createRefreshToken(ctx, login_method)
+	refresh_token := s.createRefreshToken(cc.Context(), login_method)
 	if refresh_token.Err != nil {
 		return utils.Response[entities.ActivateResponse]{
 			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error creating refresh token", "emails.set_password.error_creating_refresh_token"),
@@ -116,7 +127,7 @@ func (s EmailsService) SetPassword(ctx context.Context, entity commands.SetPassw
 		"is_removed": true,
 	})
 
-	result := s.generateTokens(ctx, login_method, refresh_token.Data)
+	result := s.generateTokens(cc.Context(), login_method, refresh_token.Data)
 
 	if result.Err != nil {
 		return utils.Response[entities.ActivateResponse]{

@@ -1,7 +1,8 @@
 package entities
 
 type ResetPassword struct {
-	Email string `json:"email" binding:"required,email"`
+	Email          string `json:"email" binding:"required,email"`
+	OrganizationID string `json:"organization_id"`
 }
 
 type ConfirmPassword struct {
