@@ -19,8 +19,8 @@ func (c *RolesController) List(ctx *gin.Context) {
 
 	entry.Info("Listing roles")
 
-	organizationID := ctx.Query("organization_id")
-	if organizationID == "" {
+	organizationID, ok := ctx.Get("organization_id")
+	if !ok {
 		ctx.JSON(http.StatusBadRequest, utils.Response[entities.Role]{
 			StatusCode: http.StatusBadRequest,
 			Error: cc.NewError(
@@ -35,7 +35,7 @@ func (c *RolesController) List(ctx *gin.Context) {
 		return
 	}
 
-	res := c.roles_service.List(cc, organizationID)
+	res := c.roles_service.List(cc, organizationID.(string))
 	if res.Error != nil {
 		ctx.JSON(res.StatusCode, res.ToMapWithCustomContext(cc))
 		return

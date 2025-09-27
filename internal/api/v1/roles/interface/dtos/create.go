@@ -8,9 +8,8 @@ import (
 )
 
 type CreateRoleDTO struct {
-	Name           string `json:"name" validate:"required"`
-	Description    string `json:"description"`
-	OrganizationID string `json:"organization_id" validate:"required"`
+	Name        string `json:"name" validate:"required"`
+	Description string `json:"description"`
 }
 
 func (dto CreateRoleDTO) Validate() error {
@@ -25,8 +24,7 @@ func (dto CreateRoleDTO) ToJson() ([]byte, error) {
 
 func (dto CreateRoleDTO) ToCommand() commands.CreateRoleCommand {
 	return commands.CreateRoleCommand{
-		Name:           dto.Name,
-		Description:    dto.Description,
-		OrganizationID: dto.OrganizationID,
+		Name:        dto.Name,
+		Description: dto.Description,
 	}
 }

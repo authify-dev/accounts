@@ -1,9 +1,12 @@
 package roles
 
 import (
+	"accounts/internal/api/middlewares"
 	"accounts/internal/api/v1/roles/domain/services"
 	"accounts/internal/api/v1/roles/interface/controllers"
+	usecases "accounts/internal/context/v1/api_keys/app/use_cases"
 	"accounts/internal/core/settings"
+	api_keys_pg "accounts/internal/db/postgres/api_keys"
 	postgres_role "accounts/internal/db/postgres/role"
 
 	"github.com/gin-gonic/gin"
@@ -11,6 +14,8 @@ import (
 )
 
 func SetupRolesModule(app *gin.Engine, db *gorm.DB) {
+
+	api_keys_repository := api_keys_pg.NewAPIKeyPostgresRepository(db)
 
 	rolesService := services.NewRolesService(
 		postgres_role.NewRolePostgresRepository(db),
@@ -20,6 +25,8 @@ func SetupRolesModule(app *gin.Engine, db *gorm.DB) {
 
 	// Rutas de users
 	roles := app.Group(settings.Settings.ROOT_PATH + "/api/v1/roles")
+
+	roles.Use(middlewares.APIKeyAuthMiddleware(*usecases.NewValidateAPIKeyUseCase(api_keys_repository)))
 
 	roles.POST("", rolesController.Create)
 	roles.GET("", rolesController.List)
