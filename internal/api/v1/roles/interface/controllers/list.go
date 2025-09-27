@@ -17,7 +17,7 @@ func (c *RolesController) List(ctx *gin.Context) {
 		})
 		return
 	}
-	roles, err := c.userService.List(organizationID)
+	roles, err := c.roles_service.List(organizationID)
 	if err != nil {
 		ctx.JSON(fiber.StatusBadRequest, responses.Response{
 			Status: fiber.StatusBadRequest,

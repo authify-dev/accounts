@@ -21,7 +21,7 @@ func SetupRolesModule(app *gin.Engine, db *gorm.DB) {
 	// Rutas de users
 	roles := app.Group(settings.Settings.ROOT_PATH + "/api/v1/roles")
 
-	roles.POST("", rolesController.SignUp)
+	roles.POST("", rolesController.Create)
 	roles.GET("", rolesController.List)
 
 }
