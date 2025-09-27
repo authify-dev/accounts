@@ -3,7 +3,8 @@ package controllers
 import (
 	"accounts/internal/api/v1/policies/interface/dtos"
 	"accounts/internal/common/logger"
-	"accounts/internal/common/requests"
+	"foundation/domain/customctx"
+	"foundation/interface/cdtos"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,15 +15,20 @@ func (c *PoliciesController) Create(ctx *gin.Context) {
 
 	entry.Info("Creating policy")
 
-	dto := requests.GetDTO[dtos.CreatePolicyDTO](ctx)
-	if dto == nil {
-		entry.Error("Invalid request")
+	cc := customctx.NewCustomContext(ctx.Request.Context())
+
+	dto := cdtos.GetDTOWithResponse[dtos.CreatePolicyDTO](ctx, cc)
+	if dto.Error != nil {
+		ctx.JSON(dto.StatusCode, dto.ToMapWithCustomContext(cc))
 		return
 	}
 
-	command := dto.ToCommand()
+	policy := c.policies_service.Create(cc, dto.Data.ToCommand())
 
-	policy := c.policies_service.Create(ctx.Request.Context(), command)
+	if policy.Error != nil {
+		ctx.JSON(policy.StatusCode, policy.ToMapWithCustomContext(cc))
+		return
+	}
 
-	ctx.JSON(policy.StatusCode, policy.ToMap())
+	ctx.JSON(policy.StatusCode, policy.ToMapWithCustomContext(cc))
 }

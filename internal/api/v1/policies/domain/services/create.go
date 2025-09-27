@@ -4,15 +4,15 @@ import (
 	"accounts/internal/api/v1/policies/domain/commands"
 	"accounts/internal/api/v1/policies/domain/entities"
 	"accounts/internal/common/logger"
-	"context"
+	"foundation/domain/customctx"
 	"foundation/utils"
 	"foundation/utils/cerrs"
 	"net/http"
 )
 
-func (s *PoliciesService) Create(ctx context.Context, command commands.CreatePolicyCommand) utils.Response[entities.PolicyEntity] {
+func (s *PoliciesService) Create(cc *customctx.CustomContext, command commands.CreatePolicyCommand) utils.Response[entities.PolicyEntity] {
 
-	entry := logger.FromContext(ctx)
+	entry := logger.FromContext(cc.Context())
 
 	entity := entities.PolicyEntity{
 		Name:           command.Name,
@@ -28,7 +28,15 @@ func (s *PoliciesService) Create(ctx context.Context, command commands.CreatePol
 	if res.Err != nil {
 		entry.Error("Error creating policy", "error", res.Err)
 		return utils.Response[entities.PolicyEntity]{
-			Error: cerrs.NewCustomError(http.StatusInternalServerError, "Error creating policy", "policies.create.error_creating_policy"),
+			Error: cc.NewError(
+				cerrs.NewCustomError(
+					http.StatusInternalServerError,
+					"Error creating policy: "+res.Err.Error(),
+					"policies.create.error_creating_policy",
+				),
+			),
+			StatusCode: res.Err.GetCode(),
+			Success:    false,
 		}
 	}
 

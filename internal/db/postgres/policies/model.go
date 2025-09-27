@@ -18,15 +18,15 @@ const (
 
 // PolicyModel representa el modelo de datos para la entidad Policy.
 type PolicyModel struct {
-	// Se asume que postgres.Model es un struct genérico que contiene campos comunes (como ID).
 	cgorm.Model[entities.PolicyEntity]
 
-	Name           string                      `json:"name"`
-	Description    string                      `json:"description,omitempty"`
-	Resource       string                      `json:"resource"` // e.g. "user", "chat", "document"
-	Action         string                      `json:"action"`   // e.g. "create", "read", "update", "delete"
-	Effect         policies_enums.PolicyEffect `json:"effect"`   // "allow" | "deny"
-	OrganizationID string                      `json:"organization_id" gorm:"type:varchar(50);not null"`
+	Name        string                      `json:"name"`
+	Description string                      `json:"description,omitempty"`
+	Resource    string                      `gorm:"type:varchar(255);not null;uniqueIndex:uniq_policy_org_resource_action_effect,priority:2" json:"resource"`
+	Action      string                      `gorm:"type:varchar(255);not null;uniqueIndex:uniq_policy_org_resource_action_effect,priority:3" json:"action"`
+	Effect      policies_enums.PolicyEffect `gorm:"type:varchar(10);not null;uniqueIndex:uniq_policy_org_resource_action_effect,priority:4" json:"effect"`
+
+	OrganizationID string `gorm:"type:varchar(50);not null;uniqueIndex:uniq_policy_org_resource_action_effect,priority:1" json:"organization_id"`
 
 	Organization *organizations_gorm.OrganizationModel `gorm:"foreignKey:OrganizationID"`
 }
