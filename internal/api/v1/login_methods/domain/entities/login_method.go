@@ -17,11 +17,12 @@ import (
 // LoginMethods embebe a Entity, por lo que automáticamente implementa domain.IEntity.
 type LoginMethod struct {
 	domain.Entity
-	UserID     string `json:"user_id,omitempty"`
-	EntityID   string `json:"entity_id,omitempty"`
-	EntityType string `json:"entity_type,omitempty"`
-	IsActive   bool   `json:"is_active,omitempty"`
-	IsVerify   bool   ` json:"is_verify,omitempty"`
+	UserID         string `json:"user_id,omitempty"`
+	EntityID       string `json:"entity_id,omitempty"`
+	EntityType     string `json:"entity_type,omitempty"`
+	OrganizationID string `json:"organization_id,omitempty"`
+	IsActive       bool   `json:"is_active,omitempty"`
+	IsVerify       bool   ` json:"is_verify,omitempty"`
 }
 
 func (r LoginMethod) ToJSON() map[string]interface{} {

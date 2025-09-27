@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"foundation/utils"
 	"foundation/utils/cerrs"
+	"log"
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -54,7 +56,7 @@ func EntityToModel[E IEntity, M IModel](entity IEntity) utils.Result[M] {
 	if err != nil {
 		return utils.Result[M]{Err: &cerrs.CustomError{
 			Code:    http.StatusInternalServerError,
-			Message: "Error in convert entity to model",
+			Message: "Error in convert entity to model: " + err.Error(),
 			Scope:   "entity_to_model",
 		}}
 	}
@@ -64,7 +66,7 @@ func EntityToModel[E IEntity, M IModel](entity IEntity) utils.Result[M] {
 	if err != nil {
 		return utils.Result[M]{Err: &cerrs.CustomError{
 			Code:    http.StatusInternalServerError,
-			Message: "Error in convert entity to model",
+			Message: "Error in convert entity to model: " + err.Error(),
 			Scope:   "entity_to_model",
 		}}
 	}
@@ -72,11 +74,18 @@ func EntityToModel[E IEntity, M IModel](entity IEntity) utils.Result[M] {
 	// Convertir el mapa a modelo.
 	model, err := FromJSON[M](result)
 	if err != nil {
-		return utils.Result[M]{Err: &cerrs.CustomError{
-			Code:    http.StatusInternalServerError,
-			Message: "Error in convert entity to model",
-			Scope:   "entity_to_model",
-		}}
+		// Si quieres ignorar los errores que contengan cierto texto:
+		if strings.Contains(err.Error(), "cannot unmarshal") {
+			// logueas el problema, pero no lo tratas como fatal
+			log.Printf("[WARN] error de parseo ignorado: %v", err)
+		} else {
+			// aquí sí es un error “real”
+			return utils.Result[M]{Err: &cerrs.CustomError{
+				Code:    http.StatusInternalServerError,
+				Message: "Error in convert entity to model: " + err.Error(),
+				Scope:   "entity_to_model",
+			}}
+		}
 	}
 
 	return utils.Result[M]{Data: model}

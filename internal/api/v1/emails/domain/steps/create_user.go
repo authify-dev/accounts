@@ -66,7 +66,7 @@ func (s *CreateUserStep) Call(ctx context.Context, payload utils.Result[any], al
 
 	result := s.user_repo.Save(s.user)
 
-	s.user.ID = result.Data.ID
+	s.user_id = result.Data.ID.String()
 
 	if result.Err != nil {
 		entry.Error("error saving user")

@@ -5,10 +5,11 @@ import (
 )
 
 type SignUpDTO struct {
-	UserName string `json:"user_name"`
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required"`
-	Role     string `json:"role" binding:"required"`
+	UserName       string `json:"user_name"`
+	Email          string `json:"email" binding:"required,email"`
+	Password       string `json:"password" binding:"required"`
+	Role           string `json:"role" binding:"required"`
+	OrganizationID string `json:"organization_id"`
 }
 
 func (dto SignUpDTO) Validate() error {

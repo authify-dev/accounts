@@ -59,7 +59,9 @@ func (r *PostgresRepository[E, M]) Save(role E) utils.Result[E] {
 		}}
 	}
 
-	return utils.Result[E]{Data: domain.ModelToEntity[E, M](roleModel).Data}
+	newEntity := domain.ModelToEntity[E, M](roleModel)
+
+	return utils.Result[E]{Data: newEntity.Data}
 }
 
 func (r *PostgresRepository[E, M]) SearchAll() ([]E, error) {

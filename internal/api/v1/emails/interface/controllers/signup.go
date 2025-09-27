@@ -5,6 +5,8 @@ import (
 	"accounts/internal/api/v1/emails/interface/dtos"
 	"accounts/internal/common/requests"
 	"accounts/internal/common/responses"
+	"foundation/domain/customctx"
+	"foundation/interface/cdtos"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gofiber/fiber/v2"
@@ -13,17 +15,24 @@ import (
 
 func (c *EmailsController) SignUp(ctx *gin.Context) {
 
-	dto := requests.GetDTO[dtos.SignUpDTO](ctx)
+	cc := customctx.NewCustomContext(ctx.Request.Context())
 
-	if dto == nil {
+	dto := cdtos.GetDTOWithResponse[dtos.SignUpDTO](ctx, cc)
+
+	if dto.Error != nil {
+		ctx.JSON(dto.StatusCode, dto.ToMapWithCustomContext(cc))
 		return
 	}
 
-	if dto.UserName == "" {
-		dto.UserName = "User_" + uuid.New().String()
+	organizationID := ctx.Param("organization_id")
+
+	if dto.Data.UserName == "" {
+		dto.Data.UserName = "User_" + uuid.New().String()
 	}
 
-	entity, err := entities.NewSingUpFromJSON(dto.ToJson())
+	dto.Data.OrganizationID = organizationID
+
+	entity, err := entities.NewSingUpFromJSON(dto.Data.ToJson())
 
 	if err != nil {
 		customResponse := responses.Response{

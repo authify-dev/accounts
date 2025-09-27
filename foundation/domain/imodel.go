@@ -27,7 +27,7 @@ func ModelToEntity[E IEntity, M IModel](model IModel) utils.Result[E] {
 	if err != nil {
 		return utils.Result[E]{Err: &cerrs.CustomError{
 			Code:    http.StatusInternalServerError,
-			Message: "Error in convert model to entity",
+			Message: "Error in convert model to entity: " + err.Error(),
 			Scope:   "model_to_entity",
 		}}
 	}
@@ -37,7 +37,7 @@ func ModelToEntity[E IEntity, M IModel](model IModel) utils.Result[E] {
 	if err != nil {
 		return utils.Result[E]{Err: &cerrs.CustomError{
 			Code:    http.StatusInternalServerError,
-			Message: "Error in convert model to entity",
+			Message: "Error in convert model to entity: " + err.Error(),
 			Scope:   "model_to_entity",
 		}}
 	}
@@ -46,10 +46,10 @@ func ModelToEntity[E IEntity, M IModel](model IModel) utils.Result[E] {
 	if err != nil {
 		return utils.Result[E]{Err: &cerrs.CustomError{
 			Code:    http.StatusInternalServerError,
-			Message: "Error in convert model to entity",
+			Message: "Error in convert model to entity: " + err.Error(),
 			Scope:   "model_to_entity",
 		}}
 	}
 
-	return utils.Result[E]{Data: entity}
+	return utils.Result[E]{Data: entity, Err: nil}
 }

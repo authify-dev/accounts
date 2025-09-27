@@ -14,9 +14,10 @@ import (
 // Codes embebe a Entity, por lo que automáticamente implementa domain.IEntity.
 type Code struct {
 	domain.Entity
-	Code   string `json:"code,omitempty"`
-	UserID string `json:"user_id,omitempty"`
-	Type   string `json:"type,omitempty"`
+	Code           string `json:"code,omitempty"`
+	UserID         string `json:"user_id,omitempty"`
+	Type           string `json:"type,omitempty"`
+	OrganizationID string `json:"organization_id,omitempty"`
 	//User   string `json:"user,omitempty"`
 }
 

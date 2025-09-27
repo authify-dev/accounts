@@ -1,7 +1,7 @@
 package postgres
 
 import (
-	"accounts/internal/api/v1/oauth_logins/domain/entities"
+	"accounts/internal/api/v1/emails/domain/entities"
 	"accounts/internal/core/settings"
 	postgres_organizations "accounts/internal/db/postgres/organinizations"
 	postgres_users "accounts/internal/db/postgres/users"
@@ -16,10 +16,10 @@ const (
 	ENTITY_EMAIL_CODE = "06"
 )
 
-// EmailModel representa el modelo de datos para la entidad OAuthLogin.
+// EmailModel representa el modelo de datos para la entidad Email.
 type EmailModel struct {
 	// Se asume que postgres.Model es un struct genérico que contiene campos comunes (como ID).
-	cgorm.Model[entities.OAuthLogin]
+	cgorm.Model[entities.Email]
 
 	// UserID es el identificador del usuario asociado.
 	UserID string `gorm:"type:varchar(50);not null" json:"user_id,omitempty"`
@@ -55,7 +55,9 @@ func (m *EmailModel) BeforeCreate(tx *gorm.DB) (err error) {
 	if err != nil {
 		return err
 	}
-	_id := idx.UUID()
-	m.ID = _id
+	m.ID = idx.UUID()
+	if err != nil {
+		return err
+	}
 	return m.Model.BeforeCreate(tx)
 }

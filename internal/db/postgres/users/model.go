@@ -28,11 +28,12 @@ type UserModel struct {
 	UserName string `gorm:"type:varchar(255);uniqueIndex:idx_users_org_user_name,priority:2;not null;" json:"user_name"`
 	Name     string `gorm:"type:varchar(255);" json:"name"`
 
+	//Role           string `gorm:"type:varchar(255);" json:"role"`
 	RoleID         string `gorm:"type:varchar(50);not null" json:"role_id"`
 	OrganizationID string `gorm:"type:uuid;not null;uniqueIndex:idx_users_org_user_name,priority:1" json:"organization_id"`
 	// La etiqueta foreignKey indica cuál es el campo en este modelo que es llave foránea,
 	// y references indica a qué campo del modelo relacionado hace referencia.
-	RoleModel         postgres_role.RoleModel                  `gorm:"foreignKey:RoleID;references:ID" json:"role"`
+	RoleModel         postgres_role.RoleModel                  `gorm:"foreignKey:RoleID;references:ID"`
 	OrganizationModel postgres_organizations.OrganizationModel `gorm:"foreignKey:OrganizationID;references:ID" json:"organization"`
 }
 

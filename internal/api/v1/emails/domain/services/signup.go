@@ -23,8 +23,9 @@ import (
 
 func (s EmailsService) generateUser(entity entities.SignUp) utils.Result[users.User] {
 	return utils.Result[users.User]{Data: users.User{
-		UserName: entity.UserName,
-		Role:     entity.Role,
+		UserName:       entity.UserName,
+		Role:           entity.Role,
+		OrganizationID: entity.OrganizationID,
 	}}
 }
 
@@ -36,8 +37,9 @@ func (s EmailsService) generateEmail(entity entities.SignUp) utils.Result[entiti
 	}
 
 	return utils.Result[entities.Email]{Data: entities.Email{
-		Email:    entity.Email,
-		Password: password_hashed,
+		Email:          entity.Email,
+		Password:       password_hashed,
+		OrganizationID: entity.OrganizationID,
 	}}
 }
 
@@ -110,10 +112,12 @@ func (s EmailsService) registerLogin(ctx context.Context, registerUserFlow Regis
 				user.ID.String(),
 				email.ID.String(),
 				"email",
+				user.OrganizationID,
 			),
 			steps.NewCreateCodeStep(
 				s.codes_repository,
 				user.ID.String(),
+				user.OrganizationID,
 			),
 		},
 		PrevSaga: controller,

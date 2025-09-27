@@ -148,6 +148,7 @@ func (s *OAuthService) SignInGoogle(ctx context.Context, code, role string) util
 					user_ent.ID.String(),
 					oauth_ent.ID.String(),
 					"oauth",
+					user_ent.OrganizationID,
 				),
 			},
 			PrevSaga: &controller,
