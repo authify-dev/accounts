@@ -3,15 +3,18 @@ package controllers
 import (
 	"accounts/internal/api/v1/role_policies/interface/dtos"
 	"accounts/internal/common/logger"
-	"accounts/internal/common/requests"
 	"accounts/internal/common/responses"
+	"foundation/domain/customctx"
+	"foundation/interface/cdtos"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gofiber/fiber/v2"
 )
 
 func (c *RolePoliciesController) Create(ctx *gin.Context) {
-	entry := logger.FromContext(ctx)
+
+	cc := customctx.NewCustomContext(ctx.Request.Context())
+	entry := logger.FromContext(cc.Context())
 
 	entry.Info("Creating role policies")
 
@@ -25,17 +28,18 @@ func (c *RolePoliciesController) Create(ctx *gin.Context) {
 		return
 	}
 
-	dto := requests.GetDTO[dtos.CreateRolePoliciesDTO](ctx)
-	if dto == nil {
+	dto := cdtos.GetDTOWithResponse[dtos.CreateRolePoliciesDTO](ctx, cc)
+	if dto.Error != nil {
 		entry.Error("Invalid request")
+		ctx.JSON(dto.StatusCode, dto.ToMapWithCustomContext(cc))
 		return
 	}
 
-	command := dto.ToCommand()
+	command := dto.Data.ToCommand()
 
 	command.OrganizationID = organizationID
 
-	role_policies := c.service.Create(ctx.Request.Context(), command)
+	role_policies := c.service.Create(cc, command)
 
-	ctx.JSON(role_policies.StatusCode, role_policies.ToMap())
+	ctx.JSON(role_policies.StatusCode, role_policies.ToMapWithCustomContext(cc))
 }

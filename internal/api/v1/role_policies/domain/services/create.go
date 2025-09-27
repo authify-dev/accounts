@@ -4,15 +4,15 @@ import (
 	"accounts/internal/api/v1/role_policies/domain/commands"
 	"accounts/internal/api/v1/role_policies/domain/entities"
 	"accounts/internal/common/logger"
-	"context"
 	"foundation/domain/criteria"
+	"foundation/domain/customctx"
 	"foundation/utils"
 	"foundation/utils/cerrs"
 	"net/http"
 )
 
-func (s *RolePoliciesService) Create(ctx context.Context, command commands.CreateRolePoliciesCommand) utils.Response[entities.RolePoliciesEntity] {
-	entry := logger.FromContext(ctx)
+func (s *RolePoliciesService) Create(cc *customctx.CustomContext, command commands.CreateRolePoliciesCommand) utils.Response[entities.RolePoliciesEntity] {
+	entry := logger.FromContext(cc.Context())
 
 	cri := criteria.Criteria{
 		Filters: *criteria.NewFilters(
@@ -36,14 +36,26 @@ func (s *RolePoliciesService) Create(ctx context.Context, command commands.Creat
 	if err != nil {
 		entry.Error("Error getting role", "error", err)
 		return utils.Response[entities.RolePoliciesEntity]{
-			Error: cerrs.NewCustomError(http.StatusInternalServerError, "Error getting role", "role_policies.create.error_getting_role"),
+			Error: cc.NewError(
+				cerrs.NewCustomError(
+					http.StatusInternalServerError,
+					"Error getting role",
+					"role_policies.create.error_getting_role",
+				),
+			),
 		}
 	}
 
 	if len(roles) == 0 {
 		entry.Error("Role not found")
 		return utils.Response[entities.RolePoliciesEntity]{
-			Error: cerrs.NewCustomError(http.StatusNotFound, "Role not found", "role_policies.create.role_not_found"),
+			Error: cc.NewError(
+				cerrs.NewCustomError(
+					http.StatusNotFound,
+					"Role not found",
+					"role_policies.create.role_not_found",
+				),
+			),
 		}
 	}
 
@@ -52,7 +64,13 @@ func (s *RolePoliciesService) Create(ctx context.Context, command commands.Creat
 	if role.OrganizationID != command.OrganizationID {
 		entry.Error("Role not found in organization")
 		return utils.Response[entities.RolePoliciesEntity]{
-			Error: cerrs.NewCustomError(http.StatusNotFound, "Role not found in organization", "role_policies.create.role_not_found_in_organization"),
+			Error: cc.NewError(
+				cerrs.NewCustomError(
+					http.StatusNotFound,
+					"Role not found in organization",
+					"role_policies.create.role_not_found_in_organization",
+				),
+			),
 		}
 	}
 
@@ -78,14 +96,26 @@ func (s *RolePoliciesService) Create(ctx context.Context, command commands.Creat
 	if err != nil {
 		entry.Error("Error getting policy", "error", err)
 		return utils.Response[entities.RolePoliciesEntity]{
-			Error: cerrs.NewCustomError(http.StatusInternalServerError, "Error getting policy", "role_policies.create.error_getting_policy"),
+			Error: cc.NewError(
+				cerrs.NewCustomError(
+					http.StatusInternalServerError,
+					"Error getting policy",
+					"role_policies.create.error_getting_policy",
+				),
+			),
 		}
 	}
 
 	if len(policies) == 0 {
 		entry.Error("Policy not found")
 		return utils.Response[entities.RolePoliciesEntity]{
-			Error: cerrs.NewCustomError(http.StatusNotFound, "Policy not found", "role_policies.create.policy_not_found"),
+			Error: cc.NewError(
+				cerrs.NewCustomError(
+					http.StatusNotFound,
+					"Policy not found",
+					"role_policies.create.policy_not_found",
+				),
+			),
 		}
 	}
 
@@ -94,7 +124,13 @@ func (s *RolePoliciesService) Create(ctx context.Context, command commands.Creat
 	if policy.OrganizationID != command.OrganizationID {
 		entry.Error("Policy not found in organization")
 		return utils.Response[entities.RolePoliciesEntity]{
-			Error: cerrs.NewCustomError(http.StatusNotFound, "Policy not found in organization", "role_policies.create.policy_not_found_in_organization"),
+			Error: cc.NewError(
+				cerrs.NewCustomError(
+					http.StatusNotFound,
+					"Policy not found in organization",
+					"role_policies.create.policy_not_found_in_organization",
+				),
+			),
 		}
 	}
 
@@ -109,7 +145,13 @@ func (s *RolePoliciesService) Create(ctx context.Context, command commands.Creat
 	if res.Err != nil {
 		entry.Error("Error creating policy", "error", res.Err)
 		return utils.Response[entities.RolePoliciesEntity]{
-			Error: cerrs.NewCustomError(http.StatusInternalServerError, "Error creating policy", "role_policies.create.error_creating_policy"),
+			Error: cc.NewError(
+				cerrs.NewCustomError(
+					http.StatusInternalServerError,
+					"Error creating policy",
+					"role_policies.create.error_creating_policy",
+				),
+			),
 		}
 	}
 
