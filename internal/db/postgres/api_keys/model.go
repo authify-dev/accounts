@@ -6,6 +6,7 @@ import (
 	organizations_gorm "accounts/internal/db/postgres/organinizations"
 	"foundation/infrastructure/db/cgorm"
 	"foundation/utils"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -18,22 +19,33 @@ const (
 // --------------------------------
 // INFRASTRUCTURE
 // --------------------------------
-// Role Model
+// APIKey Model
 // --------------------------------
 
-// RoleModel utiliza Model parametrizado con Role.
+// Tabla unificada: api_keys
 type APIKeyModel struct {
 	cgorm.Model[entities.APIKeyEntity]
 
-	// El name ya NO debe tener uniqueIndex “solo”
-	Name string `gorm:"type:varchar(255);not null;uniqueIndex:idx_roles_org_name,priority:2" json:"name"`
+	OrganizationID uuid.UUID `gorm:"type:uuid;not null;uniqueIndex:uniq_api_keys_org_name,priority:1;index:idx_api_keys_org_prefix,priority:1" json:"organization_id"`
+	Name           string    `gorm:"type:varchar(255);not null;uniqueIndex:uniq_api_keys_org_name,priority:2" json:"name"`
 
-	// Conviene que sea uuid si tu tabla de organizations usa uuid (ajústalo si aplica)
-	OrganizationID string `gorm:"type:uuid;not null;uniqueIndex:idx_roles_org_name,priority:1" json:"organization_id"`
+	// Identificador y prefijo (para búsquedas por secret)
+	KeyID  string `gorm:"type:varchar(32);not null;uniqueIndex" json:"key_id"`
+	Prefix string `gorm:"type:varchar(16);not null;index:idx_api_keys_org_prefix,priority:2" json:"prefix"`
 
-	Key string `gorm:"type:varchar(255);not null" json:"key"`
+	// Secret: SÓLO hash en DB (Argon2id + pepper). Nunca guardes el plaintext.
+	SecretHash string `gorm:"type:text;not null" json:"secret_hash"`
 
-	Description string `gorm:"type:varchar(255);not null;" json:"description"`
+	// Publishable: puede guardarse en claro (o también hasheada si prefieres).
+	PublishableKey string `gorm:"type:varchar(255);not null" json:"publishable_key"`
+
+	// Metadatos
+	Scopes      string     `gorm:"type:text" json:"scopes,omitempty"` // o JSONB
+	Environment string     `gorm:"type:varchar(8);not null;default:live" json:"environment"`
+	IsActive    bool       `gorm:"type:boolean;not null;default:true" json:"is_active"`
+	LastUsedAt  *time.Time `json:"last_used_at,omitempty"`
+	RevokedAt   *time.Time `json:"revoked_at,omitempty"`
+	Description string     `gorm:"type:varchar(255)" json:"description,omitempty"`
 
 	Organization *organizations_gorm.OrganizationModel `gorm:"foreignKey:OrganizationID;references:ID"`
 }
