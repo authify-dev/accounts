@@ -1,13 +1,14 @@
 package services
 
 import (
+	"accounts/internal/api/v1/emails/domain/commands"
 	"accounts/internal/api/v1/emails/domain/entities"
 	email_events "accounts/internal/api/v1/emails/domain/events"
 	"accounts/internal/common/logger"
 	"accounts/internal/core/domain"
 	"accounts/internal/core/domain/event"
-	"context"
 	"foundation/domain/criteria"
+	"foundation/domain/customctx"
 	"foundation/utils"
 	"foundation/utils/cerrs"
 	"log"
@@ -19,12 +20,12 @@ import (
 )
 
 func (s *EmailsService) ResendActivationCode(
-	ctx context.Context,
-	entity entities.ResendActivationCode,
+	cc *customctx.CustomContext,
+	command commands.ResendActivationCodeCommand,
 ) utils.Response[entities.ResendActivationCodeResponse] {
 
 	// Logger
-	entry := logger.FromContext(ctx)
+	entry := logger.FromContext(cc.Context())
 	entry.Info("Resend Code activation")
 
 	// Get email entity
@@ -33,7 +34,12 @@ func (s *EmailsService) ResendActivationCode(
 			[]criteria.Filter{
 				{
 					Field:    "email",
-					Value:    entity.Email,
+					Value:    command.Email,
+					Operator: criteria.OperatorEqual,
+				},
+				{
+					Field:    "organization_id",
+					Value:    command.OrganizationID,
 					Operator: criteria.OperatorEqual,
 				},
 			},
@@ -85,6 +91,11 @@ func (s *EmailsService) ResendActivationCode(
 					Value:    "activation",
 					Operator: criteria.OperatorEqual,
 				},
+				{
+					Field:    "organization_id",
+					Value:    command.OrganizationID,
+					Operator: criteria.OperatorEqual,
+				},
 			},
 		),
 	}
@@ -116,9 +127,10 @@ func (s *EmailsService) ResendActivationCode(
 	// Create new Code
 
 	code = codes_entities.Code{
-		UserID: email.UserID,
-		Entity: domain.Entity{},
-		Code:   generateCode(6),
+		UserID:         email.UserID,
+		Entity:         domain.Entity{},
+		Code:           generateCode(6),
+		OrganizationID: command.OrganizationID,
 	}
 
 	result := s.codes_repository.Save(code)
@@ -133,7 +145,7 @@ func (s *EmailsService) ResendActivationCode(
 
 	// Publish event
 
-	s.publishResendCodeEvent(entity.Email, user.UserName, code.Code)
+	s.publishResendCodeEvent(command.Email, user.UserName, code.Code)
 
 	entry.Info("Event published")
 
