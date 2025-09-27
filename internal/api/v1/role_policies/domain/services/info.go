@@ -2,16 +2,22 @@ package services
 
 import (
 	policies_entities "accounts/internal/api/v1/policies/domain/entities"
+	"accounts/internal/api/v1/roles/domain/entities"
 	"accounts/internal/common/logger"
-	"context"
 	"foundation/domain/criteria"
+	"foundation/domain/customctx"
 	"foundation/utils"
 	"foundation/utils/cerrs"
 	"net/http"
 )
 
-func (s *RolePoliciesService) Info(ctx context.Context, role_id string) utils.Response[map[string]interface{}] {
-	entry := logger.FromContext(ctx)
+type RolePoliciesInfoResponse struct {
+	Role     entities.Role                    `json:"role"`
+	Policies []policies_entities.PolicyEntity `json:"policies"`
+}
+
+func (s *RolePoliciesService) Info(cc *customctx.CustomContext, role_id string) utils.Response[RolePoliciesInfoResponse] {
+	entry := logger.FromContext(cc.Context())
 
 	entry.Info("Getting role policies info")
 
@@ -19,8 +25,12 @@ func (s *RolePoliciesService) Info(ctx context.Context, role_id string) utils.Re
 
 	if err != nil {
 		entry.Error("Error getting role", "error", err)
-		return utils.Response[map[string]interface{}]{
-			Error: cerrs.NewCustomError(http.StatusInternalServerError, "Error getting role", "role_policies.info.error_getting_role"),
+		return utils.Response[RolePoliciesInfoResponse]{
+			Error: cc.NewError(
+				cerrs.NewCustomError(
+					http.StatusInternalServerError, "Error getting role", "role_policies.info.error_getting_role",
+				),
+			),
 		}
 	}
 
@@ -40,8 +50,12 @@ func (s *RolePoliciesService) Info(ctx context.Context, role_id string) utils.Re
 
 	if err != nil {
 		entry.Error("Error getting policies", "error", err)
-		return utils.Response[map[string]interface{}]{
-			Error: cerrs.NewCustomError(http.StatusInternalServerError, "Error getting policies", "role_policies.info.error_getting_policies"),
+		return utils.Response[RolePoliciesInfoResponse]{
+			Error: cc.NewError(
+				cerrs.NewCustomError(
+					http.StatusInternalServerError, "Error getting policies", "role_policies.info.error_getting_policies",
+				),
+			),
 		}
 	}
 
@@ -51,18 +65,22 @@ func (s *RolePoliciesService) Info(ctx context.Context, role_id string) utils.Re
 		policy, err := s.policies_repository.Search(role_policy.PolicyID)
 		if err != nil {
 			entry.Error("Error getting policy", "error", err)
-			return utils.Response[map[string]interface{}]{
-				Error: cerrs.NewCustomError(http.StatusInternalServerError, "Error getting policy", "role_policies.info.error_getting_policy"),
+			return utils.Response[RolePoliciesInfoResponse]{
+				Error: cc.NewError(
+					cerrs.NewCustomError(
+						http.StatusInternalServerError, "Error getting policy", "role_policies.info.error_getting_policy",
+					),
+				),
 			}
 		}
 
 		policies = append(policies, policy)
 	}
 
-	return utils.Response[map[string]interface{}]{
-		Data: map[string]interface{}{
-			"role":     role,
-			"policies": policies,
+	return utils.Response[RolePoliciesInfoResponse]{
+		Data: RolePoliciesInfoResponse{
+			Role:     role,
+			Policies: policies,
 		},
 		StatusCode: http.StatusOK,
 		Success:    true,
