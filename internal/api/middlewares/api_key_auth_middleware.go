@@ -3,6 +3,8 @@ package middlewares
 import (
 	usecases "accounts/internal/context/v1/api_keys/app/use_cases"
 	"foundation/domain/customctx"
+	"foundation/utils"
+	"foundation/utils/cerrs"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -10,20 +12,21 @@ import (
 
 func APIKeyAuthMiddleware(usecases usecases.ValidateAPIKeyUseCase) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		cc := customctx.NewCustomContext(c.Request.Context())
 		apiKey := c.GetHeader("X-API-KEY")
 		if apiKey == "" {
+			res := utils.Response[string]{
+				Success:    false,
+				StatusCode: http.StatusUnauthorized,
+				Error:      cc.NewError(cerrs.NewCustomError(http.StatusUnauthorized, "API key is required", "api_key_is_required")),
+			}
 			c.JSON(
-				http.StatusUnauthorized, gin.H{
-					"error":   "API key is required",
-					"success": false,
-					"status":  http.StatusUnauthorized,
-				},
+				res.StatusCode,
+				res.ToMapWithCustomContext(cc),
 			)
 			c.Abort()
 			return
 		}
-
-		cc := customctx.NewCustomContext(c.Request.Context())
 
 		res := usecases.Validate(cc, apiKey)
 

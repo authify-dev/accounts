@@ -18,8 +18,8 @@ func (c *RolePoliciesController) Create(ctx *gin.Context) {
 
 	entry.Info("Creating role policies")
 
-	organizationID := ctx.Query("organization_id")
-	if organizationID == "" {
+	organizationID, ok := ctx.Get("organization_id")
+	if !ok {
 		entry.Error("organization_id is required")
 		ctx.JSON(fiber.StatusBadRequest, responses.Response{
 			Status: fiber.StatusBadRequest,
@@ -37,7 +37,7 @@ func (c *RolePoliciesController) Create(ctx *gin.Context) {
 
 	command := dto.Data.ToCommand()
 
-	command.OrganizationID = organizationID
+	command.OrganizationID = organizationID.(string)
 
 	role_policies := c.service.Create(cc, command)
 
