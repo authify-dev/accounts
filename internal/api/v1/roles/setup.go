@@ -29,7 +29,7 @@ func SetupRolesModule(app *gin.Engine, db *gorm.DB) {
 	// Rutas de users
 	roles := app.Group(settings.Settings.ROOT_PATH + "/api/v1/roles")
 
-	roles.Use(middlewares.APIKeyAuthMiddleware(*usecases.NewValidateAPIKeyUseCase(api_keys_repository, verifier)))
+	roles.Use(middlewares.APIKeySecretAuthMiddleware(*usecases.NewValidateSecretAPIKeyUseCase(api_keys_repository, verifier)))
 
 	roles.POST("", rolesController.Create)
 	roles.GET("", rolesController.List)

@@ -31,7 +31,7 @@ func SetupAPIKeysModule(router *gin.Engine, db *gorm.DB) {
 
 	api_keys_route := router.Group(settings.Settings.ROOT_PATH + "/api/v1/api-keys")
 	api_keys_route.POST("/generate", generator_api_keys_controller.Handle)
-	api_keys_route.GET("/validate-secret", middlewares.APIKeyAuthMiddleware(*usecases.NewValidateAPIKeyUseCase(apiKeyRepository, verifier)), simpleTest)
+	api_keys_route.GET("/validate-secret", middlewares.APIKeySecretAuthMiddleware(*usecases.NewValidateSecretAPIKeyUseCase(apiKeyRepository, verifier)), simpleTest)
 }
 
 func simpleTest(ctx *gin.Context) {

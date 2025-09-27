@@ -35,7 +35,7 @@ func SetupRolePoliciesModule(router *gin.Engine, db *gorm.DB) {
 
 	role_policies_route := router.Group(settings.Settings.ROOT_PATH + "/api/v1/role_policies")
 
-	role_policies_route.Use(middlewares.APIKeyAuthMiddleware(*usecases.NewValidateAPIKeyUseCase(api_keys_repository, verifier)))
+	role_policies_route.Use(middlewares.APIKeySecretAuthMiddleware(*usecases.NewValidateSecretAPIKeyUseCase(api_keys_repository, verifier)))
 
 	role_policies_route.POST("", role_policies_controller.Create)
 	role_policies_route.GET("/:role_id", role_policies_controller.Info)

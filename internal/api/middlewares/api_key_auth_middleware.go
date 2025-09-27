@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func APIKeyAuthMiddleware(usecases usecases.ValidateAPIKeyUseCase) gin.HandlerFunc {
+func APIKeySecretAuthMiddleware(usecases usecases.ValidateSecretAPIKeyUseCase) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		cc := customctx.NewCustomContext(c.Request.Context())
 		apiKey := c.GetHeader("X-API-KEY")

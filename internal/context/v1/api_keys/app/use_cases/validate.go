@@ -13,23 +13,23 @@ import (
 	"strings"
 )
 
-type ValidateAPIKeyUseCase struct {
+type ValidateSecretAPIKeyUseCase struct {
 	apiKeyRepository repositories.APIKeyRepository
 	verifier         common_repositories.SecretVerifier
 }
 
-func NewValidateAPIKeyUseCase(
+func NewValidateSecretAPIKeyUseCase(
 	apiKeyRepository repositories.APIKeyRepository,
 	verifier common_repositories.SecretVerifier,
-) *ValidateAPIKeyUseCase {
-	return &ValidateAPIKeyUseCase{
+) *ValidateSecretAPIKeyUseCase {
+	return &ValidateSecretAPIKeyUseCase{
 		apiKeyRepository: apiKeyRepository,
 		verifier:         verifier,
 	}
 }
 
 // Validate recibe la Secret API Key en formato: sk_<env>_<keyid>_<randomBase64Url>
-func (u *ValidateAPIKeyUseCase) Validate(cc *customctx.CustomContext, secretKey string) utils.Response[entities.APIKeyEntity] {
+func (u *ValidateSecretAPIKeyUseCase) Validate(cc *customctx.CustomContext, secretKey string) utils.Response[entities.APIKeyEntity] {
 	entry := logger.FromContext(cc.Context())
 	entry.Info("Validating Secret API key")
 
