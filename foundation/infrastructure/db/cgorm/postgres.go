@@ -48,13 +48,13 @@ func (r *PostgresRepository[E, M]) Save(role E) utils.Result[E] {
 			err = fmt.Errorf("duplicate key error: a record with the same unique key (%s) already exists", pgErr.Detail)
 			return utils.Result[E]{Err: &cerrs.CustomError{
 				Code:    http.StatusInternalServerError,
-				Message: "Error in save entity",
+				Message: "Error in save entity: " + err.Error(),
 				Scope:   "save_entity",
 			}}
 		}
 		return utils.Result[E]{Err: &cerrs.CustomError{
 			Code:    http.StatusInternalServerError,
-			Message: "Error in save entity",
+			Message: "Error in save entity: " + err.Error(),
 			Scope:   "save_entity",
 		}}
 	}
