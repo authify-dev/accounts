@@ -2,6 +2,7 @@ package main
 
 import (
 	"accounts/internal/core/settings"
+	apikeys_gorm "accounts/internal/db/postgres/api_keys"
 	codes "accounts/internal/db/postgres/codes"
 	emails "accounts/internal/db/postgres/emails"
 	login_methods "accounts/internal/db/postgres/login_methods"
@@ -106,6 +107,12 @@ func main() {
 	err = db.AutoMigrate(&organizations_pg.OrganizationModel{})
 	if err != nil {
 		panic("failed to migrate organizations: " + err.Error())
+	}
+
+	// Migrate api keys
+	err = db.AutoMigrate(&apikeys_gorm.APIKeyModel{})
+	if err != nil {
+		panic("failed to migrate api keys: " + err.Error())
 	}
 
 	fmt.Println("Migrations completed")
