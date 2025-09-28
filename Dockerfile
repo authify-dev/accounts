@@ -1,34 +1,25 @@
-# Usa la versión especificada en pyproject.toml
-FROM python:3.13-slim
-
-# Configuración del contenedor
-ENV PYTHONUNBUFFERED=1
-
-# Instala dependencias del sistema necesarias para poetry
-RUN apt-get update && apt-get install -y \
-    curl \
-    && apt-get clean
-
-# Instala Poetry
-RUN curl -sSL https://install.python-poetry.org | python3 -
-
-# Añadir Poetry al PATH
-ENV PATH="/root/.local/bin:$PATH"
-
-# Crear directorio de trabajo
+# Etapa 1: build
+FROM golang:1.25.1-alpine AS builder
 WORKDIR /app
 
-# Copiar archivos de configuración de Poetry
-COPY pyproject.toml poetry.lock* ./
+# Cache de módulos y build para acelerar reconstrucciones
+COPY go.mod go.sum ./
+COPY foundation/go.mod foundation/go.sum ./foundation/
+RUN go mod download
 
-# Instalar dependencias de Poetry
-RUN poetry install --no-root --only main
+RUN pwd
 
-# Copiar el código fuente al contenedor
-COPY src /app/
+COPY . .
 
-# Exponer el puerto para la aplicación
+# Compilar el paquete de cmd/api y forzar salida del binario
+# Ajusta GOARCH si necesitas otra arch.
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/main cmd/api/main.go
+
+FROM alpine:3.20
+
+COPY --from=builder /app/main .
+
 EXPOSE 9000
+CMD ["./main"]
 
-# Comando para iniciar la aplicación
-CMD ["poetry", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "9000", "--workers", "2"]
+
