@@ -41,7 +41,7 @@ services:
         condition: service_healthy
     build:
       context: .
-      dockerfile: docker_images/deploy/Dockerfile.deploy
+      dockerfile: docker_images/app/Dockerfile.app
     environment:
       - ENVIRONMENT=docker
       - TYPE_HANDLER=LAMBDA
@@ -52,22 +52,17 @@ services:
     networks:
       - "local-development"
 
-  app-api:
-    depends_on:
-      db:
-        condition: service_healthy
-      queue:
-        condition: service_healthy
+  api:
     build:
       context: .
-      dockerfile: docker_images/local/Dockerfile.local
+      dockerfile: docker_images/app/Dockerfile.app
     environment:
-      - ENVIRONMENT=docker
+      - ENVIRONMENT=development
       - TYPE_HANDLER=API
     env_file:
-      - ./.envs/.env.docker
+      - ./.envs/.env.dev
     ports:
-      - 9001:8000
+      - 8000:8000
     networks:
       - "local-development"
 
