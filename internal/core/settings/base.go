@@ -20,6 +20,7 @@ type Config struct {
 	COLORED_LOG bool   `required:"false" default:"true"`
 	UUID_MODULE string `required:"false" default:"01"`
 	DB_SCHEMA   string `required:"false" default:""`
+	LOKI_URL    string `required:"false" default:"http://localhost:3100"`
 
 	// Database
 	POSTGRES_DSN string `required:"true"`
