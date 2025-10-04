@@ -1,0 +1,99 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    env:
+      REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+      REGISTRY_URL: ${{ secrets.REGISTRY_URL }}
+      REGISTRY_NAME: ${{ secrets.REGISTRY_NAME }}
+      REPO_NAME: ${{ secrets.REPO_NAME }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Get branch name
+        id: branch
+        run: echo "branch=$(echo $GITHUB_REF | awk -F/ '{print $3}')" >> $GITHUB_OUTPUT
+
+      - name: Get latest version from registry
+        id: get_version
+        run: |
+          echo "Consulting registry for latest tags..."
+          BRANCH="${{ steps.branch.outputs.branch }}"
+          IMAGE_NAME="${REGISTRY_NAME}/${REPO_NAME}"
+
+          ALL_DATA=$(curl -s -u "${REGISTRY_USERNAME}:${REGISTRY_PASSWORD}" \
+            ${REGISTRY_URL}/v2/${IMAGE_NAME}/tags/list || echo "")
+
+          echo "All tags: $ALL_DATA"
+
+          ALL_TAGS=$(echo "$ALL_DATA" | jq -r '.tags[]?' 2>/dev/null || true)
+          TAGS=$(echo "$ALL_TAGS" | grep "${BRANCH}-" || true)
+
+          echo "Tags encontrados: $TAGS"
+
+          COMMIT_SHA=$(git rev-parse --short HEAD)
+
+          if [[ -z "$TAGS" ]]; then
+            BASE_VERSION="v0.0.1"
+          else
+            CLEAN_TAGS=$(echo "$TAGS" | sed -E "s/-${BRANCH}-[a-f0-9]+$//")
+            LAST_VERSION=$(echo "$CLEAN_TAGS" | sort -V | tail -n1)
+
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$(echo $LAST_VERSION | sed 's/v//')"
+            PATCH=$((PATCH + 1))
+            BASE_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+          fi
+
+          NEW_VERSION="${BASE_VERSION}-${BRANCH}-${COMMIT_SHA}"
+          echo "new_tag=${NEW_VERSION}" >> $GITHUB_OUTPUT
+          echo "Nuevo tag: $NEW_VERSION"
+
+      - name: Docker login
+        run: echo "${REGISTRY_PASSWORD}" | docker login "${REGISTRY_URL}" -u "${REGISTRY_USERNAME}" --password-stdin
+
+      - name: Build and push Docker image
+        run: |
+          VERSION="${{ steps.get_version.outputs.new_tag }}"
+          IMAGE="${REGISTRY_URL}/${REGISTRY_NAME}/${REPO_NAME}"
+
+          docker build -f docker_images/app/Dockerfile.app \
+            -t $IMAGE:latest-dev \
+            -t $IMAGE:${VERSION} .
+
+          docker push $IMAGE:latest-dev
+          docker push $IMAGE:${VERSION}
+
+  deploy-webhook:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - name: Trigger deploy webhook
+        run: |
+          curl "${{ secrets.DEPLOY_WEBHOOK }}"
+
+  notify-api:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - name: Call deploy webhook API
+        run: |
+          curl -X POST "${{ secrets.NOTIFY_WEBHOOK }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "image_name": "'${{ secrets.REGISTRY_NAME }}/${{ secrets.REPO_NAME }}'",
+              "execution_time": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'",
+              "branch": "'${{ github.ref_name }}'",
+              "commit_sha": "'${{ needs.build-and-push.outputs.commit_sha || github.sha }}'",
+              "repository": "'${{ github.repository }}'",
+              "tags": ["'${{ needs.build-and-push.outputs.new_tag }}'", "latest-dev"],
+              "github_username": "'${{ github.actor }}'"
+            }'
