@@ -58,6 +58,7 @@ func (f *CustomFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 }
 
 var globalLogger *logrus.Logger
+var lokiHook *LokiHook
 
 func init() {
 	// Configuración del logger global.
@@ -65,6 +66,10 @@ func init() {
 	globalLogger.SetFormatter(&CustomFormatter{})
 	globalLogger.SetLevel(logrus.InfoLevel)
 	globalLogger.SetReportCaller(true)
+
+	// Se agrega el hook para que cada log se envíe a Loki.
+	lokiHook = NewLokiHook(50)
+	globalLogger.AddHook(lokiHook)
 }
 
 // WithFields crea un entry de logger con campos adicionales.

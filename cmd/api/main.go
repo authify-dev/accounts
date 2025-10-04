@@ -13,7 +13,7 @@ func main() {
 	settings.LoadDotEnv()
 	settings.LoadEnvs()
 
-	logger.InitLogger(settings.Settings.ENVIRONMENT, settings.Settings.APP_NAME, "")
+	logger.InitLogger(settings.Settings.ENVIRONMENT, settings.Settings.APP_NAME, settings.Settings.LOKI_URL)
 
 	//eventBus := queue.SetUpEventBus()
 
