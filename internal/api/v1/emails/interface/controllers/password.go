@@ -3,40 +3,74 @@ package controllers
 import (
 	"accounts/internal/api/v1/emails/interface/dtos"
 	"accounts/internal/common/logger"
-	"accounts/internal/common/requests"
+	"foundation/domain/customctx"
+	"foundation/interface/cdtos"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 func (c *EmailsController) ResetPassword(ctx *gin.Context) {
 
-	entry := logger.FromContext(ctx.Request.Context())
+	cc := customctx.NewCustomContext(ctx.Request.Context())
+
+	entry := logger.FromContext(cc.Context())
 
 	entry.Info("ResetPassword")
 
-	dto := requests.GetDTO[dtos.ResetPasswordDTO](ctx)
+	dto := cdtos.GetDTOWithResponse[dtos.ResetPasswordDTO](ctx, cc)
 
-	entity := dto.ToEntity()
-	entry.Infof("DTO: %v", dto)
-	entry.Infof("Entity: %v", entity)
+	if dto.Error != nil {
+		ctx.JSON(dto.StatusCode, dto.ToMapWithCustomContext(cc))
+		return
+	}
 
-	response := c.userService.ResetPassword(ctx.Request.Context(), entity)
+	command := dto.Data.ToCommand()
 
-	ctx.JSON(response.StatusCode, response.ToMap())
+	organizationID, ok := ctx.Get("organization_id")
+
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Organization ID not found",
+		})
+		return
+	}
+
+	command.OrganizationID = organizationID.(string)
+
+	response := c.userService.ResetPassword(cc, command)
+
+	ctx.JSON(response.StatusCode, response.ToMapWithCustomContext(cc))
 }
 
 func (c *EmailsController) ResetPasswordConfirm(ctx *gin.Context) {
-	entry := logger.FromContext(ctx.Request.Context())
+
+	cc := customctx.NewCustomContext(ctx.Request.Context())
+	entry := logger.FromContext(cc.Context())
 
 	entry.Info("ResetPassword Confirm")
 
-	dto := requests.GetDTO[dtos.ConfirmPasswordDTO](ctx)
+	dto := cdtos.GetDTOWithResponse[dtos.ConfirmPasswordDTO](ctx, cc)
 
-	entity := dto.ToEntity()
-	entry.Infof("DTO: %v", dto)
-	entry.Infof("Entity: %v", entity)
+	if dto.Error != nil {
+		ctx.JSON(dto.StatusCode, dto.ToMapWithCustomContext(cc))
+		return
+	}
 
-	response := c.userService.ConfirmPassword(ctx.Request.Context(), entity)
+	command := dto.Data.ToCommand()
 
-	ctx.JSON(response.StatusCode, response.ToMap())
+	organizationID, ok := ctx.Get("organization_id")
+
+	if !ok {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Organization ID not found",
+		})
+		return
+	}
+
+	command.OrganizationID = organizationID.(string)
+
+	response := c.userService.ConfirmPassword(cc, command)
+
+	ctx.JSON(response.StatusCode, response.ToMapWithCustomContext(cc))
 }

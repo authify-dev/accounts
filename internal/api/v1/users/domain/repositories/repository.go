@@ -2,8 +2,8 @@ package repositories
 
 import (
 	"accounts/internal/api/v1/users/domain/entities"
-	"accounts/internal/core/domain/criteria"
-	"accounts/internal/utils"
+	"foundation/domain/criteria"
+	"foundation/utils"
 )
 
 // --------------------------------
@@ -13,7 +13,7 @@ import (
 // --------------------------------
 
 type UserRepository interface {
-	Save(role entities.User) utils.Either[string]
+	Save(role entities.User) utils.Result[entities.User]
 	Search(uuid string) (entities.User, error)
 	SearchAll() ([]entities.User, error)
 	Delete(uuid string) error

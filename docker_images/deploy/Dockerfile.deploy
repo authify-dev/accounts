@@ -1,0 +1,25 @@
+########################
+# Etapa de compilación #
+########################
+FROM amazonlinux:2 as builder
+
+RUN yum -y install tar gzip curl git
+RUN curl -LO https://go.dev/dl/go1.24.2.linux-amd64.tar.gz \
+    && tar -C /usr/local -xzf go1.24.2.linux-amd64.tar.gz
+
+ENV PATH="/usr/local/go/bin:${PATH}"
+ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
+
+WORKDIR /app
+COPY . .
+
+RUN go version
+RUN go build -ldflags="-s -w" -o app ./cmd/api/main.go
+
+########################
+# Imagen final Lambda  #
+########################
+FROM public.ecr.aws/lambda/go:1
+COPY --from=builder /app/app ${LAMBDA_TASK_ROOT}
+# Lambda busca un handler llamado "app" por defecto cuando se usa CMD ["app"]
+CMD ["app"]

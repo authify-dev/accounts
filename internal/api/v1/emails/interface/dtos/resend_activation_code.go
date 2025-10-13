@@ -1,6 +1,7 @@
 package dtos
 
 import (
+	"accounts/internal/api/v1/emails/domain/commands"
 	"encoding/json"
 )
 
@@ -20,4 +21,10 @@ func (dto ResendActivationCodeDTO) ToJson() []byte {
 	}
 
 	return data
+}
+
+func (dto ResendActivationCodeDTO) ToCommand() commands.ResendActivationCodeCommand {
+	return commands.ResendActivationCodeCommand{
+		Email: dto.Email,
+	}
 }

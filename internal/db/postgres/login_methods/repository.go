@@ -2,8 +2,8 @@ package postgres
 
 import (
 	"accounts/internal/api/v1/login_methods/domain/entities"
-	"accounts/internal/core/domain/criteria"
-	"accounts/internal/db/postgres"
+	"foundation/domain/criteria"
+	"foundation/infrastructure/db/cgorm"
 
 	"gorm.io/gorm"
 )
@@ -15,12 +15,12 @@ import (
 // --------------------------------
 
 type LoginMethodPostgresRepository struct {
-	postgres.PostgresRepository[entities.LoginMethod, LoginMethodModel]
+	cgorm.PostgresRepository[entities.LoginMethod, LoginMethodModel]
 }
 
 func NewLoginMethodPostgresRepository(connection *gorm.DB) *LoginMethodPostgresRepository {
 	return &LoginMethodPostgresRepository{
-		PostgresRepository: postgres.PostgresRepository[entities.LoginMethod, LoginMethodModel]{
+		PostgresRepository: cgorm.PostgresRepository[entities.LoginMethod, LoginMethodModel]{
 			Connection: connection,
 		},
 	}

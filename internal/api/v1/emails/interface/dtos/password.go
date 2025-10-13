@@ -1,7 +1,7 @@
 package dtos
 
 import (
-	"accounts/internal/api/v1/emails/domain/entities"
+	"accounts/internal/api/v1/emails/domain/commands"
 	"encoding/json"
 )
 
@@ -22,8 +22,8 @@ func (dto ResetPasswordDTO) ToJson() []byte {
 	return data
 }
 
-func (dto ResetPasswordDTO) ToEntity() entities.ResetPassword {
-	return entities.ResetPassword{
+func (dto ResetPasswordDTO) ToCommand() commands.ResetPassword {
+	return commands.ResetPassword{
 		Email: dto.Email,
 	}
 }
@@ -47,8 +47,8 @@ func (dto ConfirmPasswordDTO) ToJson() []byte {
 	return data
 }
 
-func (dto ConfirmPasswordDTO) ToEntity() entities.ConfirmPassword {
-	return entities.ConfirmPassword{
+func (dto ConfirmPasswordDTO) ToCommand() commands.ConfirmPassword {
+	return commands.ConfirmPassword{
 		Email:    dto.Email,
 		Code:     dto.Code,
 		Password: dto.Password,

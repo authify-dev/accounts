@@ -8,23 +8,26 @@ import (
 
 	codes "accounts/internal/api/v1/codes/domain/repositories"
 	"accounts/internal/common/logger"
-	"accounts/internal/utils"
 	"context"
+	"foundation/utils"
 )
 
 type CreateCodeStep struct {
-	code_id    string
-	user_id    string
-	codes_repo codes.CodeRepository
+	code_id         string
+	user_id         string
+	organization_id string
+	codes_repo      codes.CodeRepository
 }
 
 func NewCreateCodeStep(
 	codes_repo codes.CodeRepository,
 	user_id string,
+	organization_id string,
 ) *CreateCodeStep {
 	return &CreateCodeStep{
-		codes_repo: codes_repo,
-		user_id:    user_id,
+		codes_repo:      codes_repo,
+		user_id:         user_id,
+		organization_id: organization_id,
 	}
 }
 
@@ -33,10 +36,11 @@ func (s *CreateCodeStep) Call(ctx context.Context, payload utils.Result[any], al
 	entry := logger.FromContext(ctx)
 
 	code_entity := codes_entities.Code{
-		UserID: s.user_id,
-		Entity: domain.Entity{},
-		Code:   generateCode(6),
-		Type:   "activation",
+		UserID:         s.user_id,
+		OrganizationID: s.organization_id,
+		Entity:         domain.Entity{},
+		Code:           generateCode(6),
+		Type:           "activation",
 	}
 
 	result := s.codes_repo.Save(code_entity)
@@ -45,10 +49,10 @@ func (s *CreateCodeStep) Call(ctx context.Context, payload utils.Result[any], al
 		return utils.Result[any]{Err: result.Err}
 	}
 
-	s.code_id = result.Data
+	s.code_id = result.Data.ID.String()
 
 	return utils.Result[any]{
-		Data: code_entity,
+		Data: result.Data,
 	}
 }
 

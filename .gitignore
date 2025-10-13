@@ -145,3 +145,7 @@ src/migrations
 
 
 *.pem
+
+.vscode/
+
+__debug_bin*

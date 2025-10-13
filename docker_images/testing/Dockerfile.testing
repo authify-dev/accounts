@@ -1,0 +1,37 @@
+##############################
+# Etapa 1 ▸ Compilación      #
+##############################
+FROM golang:1.24-alpine AS builder
+
+# Ajustes de cross-compiling (binario estático)
+ENV CGO_ENABLED=0 \
+    GOOS=linux \
+    GOARCH=amd64
+
+WORKDIR /src
+
+# Solo necesitamos git para go modules
+RUN apk add --no-cache git
+
+# ↓ 1. Dependencias
+COPY go.mod go.sum ./
+RUN go mod download
+
+# ↓ 2. Código fuente
+COPY . .
+
+# ↓ 3. Compilación (nombre binario = server)
+RUN go build -ldflags="-s -w" -o /server ./cmd/api/main.go
+
+
+##############################
+# Etapa 2 ▸ Ejecución local  #
+##############################
+FROM alpine:latest
+
+# Agrega certificados raíz (curl, https, etc.)
+RUN apk add --no-cache ca-certificates
+
+WORKDIR /app
+COPY --from=builder /server .
+

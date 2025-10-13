@@ -3,14 +3,15 @@ package steps
 import (
 	"accounts/internal/api/v1/emails/domain/entities"
 	users_entities "accounts/internal/api/v1/users/domain/entities"
+	"context"
+	"net/http"
 
 	emails "accounts/internal/api/v1/emails/domain/repositories"
 	users "accounts/internal/api/v1/users/domain/repositories"
 	"accounts/internal/common/logger"
-	"accounts/internal/core/domain/criteria"
-	"accounts/internal/utils"
-	"context"
-	"errors"
+	"foundation/domain/criteria"
+	"foundation/utils"
+	"foundation/utils/cerrs"
 )
 
 type CreateEmailStep struct {
@@ -54,27 +55,26 @@ func (s *CreateEmailStep) Call(ctx context.Context, payload utils.Result[any], a
 	emails, err := s.emails_repo.Matching(criteria)
 	if err != nil {
 		entry.Error("error matching role")
-		return utils.Result[any]{Err: err}
+		return utils.Result[any]{Err: cerrs.NewCustomError(http.StatusInternalServerError, "error matching role", "emails.create_email.error_matching_role")}
 	}
 
 	if len(emails) != 0 {
 		entry.Error("User already exists")
-		return utils.Result[any]{Err: errors.New("user already exists with this email")}
+		return utils.Result[any]{Err: cerrs.NewCustomError(http.StatusBadRequest, "user already exists with this email", "emails.create_email.user_already_exists_with_this_email")}
 	}
 
-	s.email.UserID = user.ID
+	s.email.UserID = user.ID.String()
 
 	result := s.emails_repo.Save(s.email)
 	if result.Err != nil {
 		entry.Error("error saving user")
-		return utils.Result[any]{Err: result.Err}
+		return utils.Result[any]{Err: cerrs.NewCustomError(http.StatusInternalServerError, "error saving user", "emails.create_email.error_saving_user")}
 	}
 
-	s.email_id = result.Data
-	s.email.ID = result.Data
+	s.email_id = result.Data.ID.String()
 
 	return utils.Result[any]{
-		Data: s.email,
+		Data: result.Data,
 	}
 }
 

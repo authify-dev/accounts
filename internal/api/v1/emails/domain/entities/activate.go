@@ -3,8 +3,9 @@ package entities
 import "encoding/json"
 
 type Activate struct {
-	Email string `json:"email"`
-	Code  string `json:"code"`
+	Email          string `json:"email"`
+	Code           string `json:"code"`
+	OrganizationID string `json:"organization_id"`
 }
 
 func NewActivateFromJSON(jsonData []byte) (Activate, error) {
@@ -16,4 +17,8 @@ func NewActivateFromJSON(jsonData []byte) (Activate, error) {
 type ActivateResponse struct {
 	JWT          string `json:"jwt"`
 	RefreshToken string `json:"refresh_token"`
+}
+
+type ActivateV2Response struct {
+	JWT string `json:"jwt"`
 }

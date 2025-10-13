@@ -1,28 +1,31 @@
 package services
 
 import (
+	"accounts/internal/api/v1/emails/domain/commands"
 	"accounts/internal/api/v1/emails/domain/entities"
 	email_events "accounts/internal/api/v1/emails/domain/events"
 	"accounts/internal/common/logger"
 	"accounts/internal/core/domain"
-	"accounts/internal/core/domain/criteria"
 	"accounts/internal/core/domain/event"
-	"accounts/internal/utils"
-	"context"
+	"foundation/domain/criteria"
+	"foundation/domain/customctx"
+	"foundation/utils"
+	"foundation/utils/cerrs"
 	"log"
 	"math/rand"
+	"net/http"
 	"time"
 
 	codes_entities "accounts/internal/api/v1/codes/domain/entities"
 )
 
 func (s *EmailsService) ResendActivationCode(
-	ctx context.Context,
-	entity entities.ResendActivationCode,
-) utils.Responses[entities.ResendActivationCodeResponse] {
+	cc *customctx.CustomContext,
+	command commands.ResendActivationCodeCommand,
+) utils.Response[entities.ResendActivationCodeResponse] {
 
 	// Logger
-	entry := logger.FromContext(ctx)
+	entry := logger.FromContext(cc.Context())
 	entry.Info("Resend Code activation")
 
 	// Get email entity
@@ -31,7 +34,12 @@ func (s *EmailsService) ResendActivationCode(
 			[]criteria.Filter{
 				{
 					Field:    "email",
-					Value:    entity.Email,
+					Value:    command.Email,
+					Operator: criteria.OperatorEqual,
+				},
+				{
+					Field:    "organization_id",
+					Value:    command.OrganizationID,
 					Operator: criteria.OperatorEqual,
 				},
 			},
@@ -40,16 +48,16 @@ func (s *EmailsService) ResendActivationCode(
 
 	emails, err := s.repository.Matching(criteria_email)
 	if err != nil {
-		return utils.Responses[entities.ResendActivationCodeResponse]{
+		return utils.Response[entities.ResendActivationCodeResponse]{
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error getting email", "emails.resend_activation_code.error_getting_email"),
 			StatusCode: 500,
-			Errors:     []string{err.Error()},
 		}
 	}
 
 	if len(emails) == 0 {
-		return utils.Responses[entities.ResendActivationCodeResponse]{
+		return utils.Response[entities.ResendActivationCodeResponse]{
+			Error:      cerrs.NewCustomError(http.StatusNotFound, "email not found", "emails.resend_activation_code.error_email_not_found"),
 			StatusCode: 404,
-			Errors:     []string{"email not found"},
 		}
 	}
 
@@ -58,9 +66,9 @@ func (s *EmailsService) ResendActivationCode(
 
 	user, err := s.user_repository.Search(email.UserID)
 	if err != nil {
-		return utils.Responses[entities.ResendActivationCodeResponse]{
+		return utils.Response[entities.ResendActivationCodeResponse]{
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error getting user", "emails.resend_activation_code.error_getting_user"),
 			StatusCode: 500,
-			Errors:     []string{err.Error()},
 		}
 	}
 
@@ -83,29 +91,34 @@ func (s *EmailsService) ResendActivationCode(
 					Value:    "activation",
 					Operator: criteria.OperatorEqual,
 				},
+				{
+					Field:    "organization_id",
+					Value:    command.OrganizationID,
+					Operator: criteria.OperatorEqual,
+				},
 			},
 		),
 	}
 
 	codes, err := s.codes_repository.Matching(criteria_codes)
 	if err != nil {
-		return utils.Responses[entities.ResendActivationCodeResponse]{
+		return utils.Response[entities.ResendActivationCodeResponse]{
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error getting codes", "emails.resend_activation_code.error_getting_codes"),
 			StatusCode: 500,
-			Errors:     []string{err.Error()},
 		}
 	}
 
 	if len(codes) == 0 {
-		return utils.Responses[entities.ResendActivationCodeResponse]{
+		return utils.Response[entities.ResendActivationCodeResponse]{
+			Error:      cerrs.NewCustomError(http.StatusNotFound, "not code by activation account is unused", "emails.resend_activation_code.error_not_code_by_activation_account_is_unused"),
 			StatusCode: 404,
-			Errors:     []string{"Not Code by Activation account is unused"},
 		}
 
 	}
 	code := codes[0]
 
 	// Update codes
-	s.codes_repository.UpdateByFields(code.ID, map[string]interface{}{
+	s.codes_repository.UpdateByFields(code.ID.String(), map[string]interface{}{
 		"is_removed": true,
 		"user_id":    email.UserID,
 	},
@@ -114,30 +127,31 @@ func (s *EmailsService) ResendActivationCode(
 	// Create new Code
 
 	code = codes_entities.Code{
-		UserID: email.UserID,
-		Entity: domain.Entity{},
-		Code:   generateCode(6),
+		UserID:         email.UserID,
+		Entity:         domain.Entity{},
+		Code:           generateCode(6),
+		OrganizationID: command.OrganizationID,
 	}
 
 	result := s.codes_repository.Save(code)
 	if result.Err != nil {
-		return utils.Responses[entities.ResendActivationCodeResponse]{
+		return utils.Response[entities.ResendActivationCodeResponse]{
+			Error:      cerrs.NewCustomError(http.StatusInternalServerError, "error saving code", "emails.resend_activation_code.error_saving_code"),
 			StatusCode: 500,
-			Errors:     []string{result.Err.Error()},
 		}
 	}
 
-	code.ID = result.Data
+	code.ID = result.Data.ID
 
 	// Publish event
 
-	s.publishResendCodeEvent(entity.Email, user.UserName, code.Code)
+	s.publishResendCodeEvent(command.Email, user.UserName, code.Code)
 
 	entry.Info("Event published")
 
-	return utils.Responses[entities.ResendActivationCodeResponse]{
+	return utils.Response[entities.ResendActivationCodeResponse]{
 		StatusCode: 200,
-		Body: entities.ResendActivationCodeResponse{
+		Data: entities.ResendActivationCodeResponse{
 			Message: "Activation code sent",
 		},
 	}

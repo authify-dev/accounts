@@ -4,6 +4,7 @@ import (
 	jwt_controller "accounts/internal/common/controllers"
 	"accounts/internal/core/domain"
 	"accounts/internal/core/settings"
+	"context"
 	"encoding/json"
 )
 
@@ -16,11 +17,12 @@ import (
 // LoginMethods embebe a Entity, por lo que automáticamente implementa domain.IEntity.
 type LoginMethod struct {
 	domain.Entity
-	UserID     string `json:"user_id,omitempty"`
-	EntityID   string `json:"entity_id,omitempty"`
-	EntityType string `json:"entity_type,omitempty"`
-	IsActive   bool   `json:"is_active,omitempty"`
-	IsVerify   bool   ` json:"is_verify,omitempty"`
+	UserID         string `json:"user_id,omitempty"`
+	EntityID       string `json:"entity_id,omitempty"`
+	EntityType     string `json:"entity_type,omitempty"`
+	OrganizationID string `json:"organization_id,omitempty"`
+	IsActive       bool   `json:"is_active,omitempty"`
+	IsVerify       bool   ` json:"is_verify,omitempty"`
 }
 
 func (r LoginMethod) ToJSON() map[string]interface{} {
@@ -39,13 +41,13 @@ func (r LoginMethod) ToJSON() map[string]interface{} {
 	return result
 }
 
-func (r LoginMethod) ToJWT(jwt_controller jwt_controller.JWTController) string {
+func (r LoginMethod) ToJWT(ctx context.Context, jwt_controller jwt_controller.JWTController) string {
 	login_map := r.ToJSON()
 
 	delete(login_map, "updated_at")
 	delete(login_map, "created_at")
 
-	jwt, err := jwt_controller.GenerateToken(login_map, settings.Settings.JWT_EXPIRE)
+	jwt, err := jwt_controller.GenerateToken(ctx, login_map, settings.Settings.JWT_EXPIRE)
 	if err != nil {
 		return ""
 	}

@@ -1,0 +1,92 @@
+package domain
+
+import (
+	"encoding/json"
+	"fmt"
+	"foundation/utils"
+	"foundation/utils/cerrs"
+	"log"
+	"net/http"
+	"strings"
+
+	"github.com/google/uuid"
+)
+
+// --------------------------------
+// DOMAIN
+// --------------------------------
+// IEntity
+//--------------------------------
+
+// Definimos una interfaz que represente a una entidad.
+type IEntity interface {
+	GetID() uuid.UUID
+}
+
+func ToJSON[E IEntity](entity E) []byte {
+	jsonData, err := json.MarshalIndent(entity, "", "  ")
+	if err != nil {
+		fmt.Println("Error al convertir a JSON:", err)
+		return nil
+	}
+
+	return jsonData
+}
+
+// Función genérica que opera sobre tipos que cumplen con IEntity.
+func FromJSON[E IEntity](m map[string]interface{}) (E, error) {
+	var entity E
+
+	// Convertir el mapa a bytes JSON.
+	bytes, err := json.Marshal(m)
+	if err != nil {
+		return entity, err
+	}
+
+	// Deserializar los bytes JSON en la entidad.
+	err = json.Unmarshal(bytes, &entity)
+	return entity, err
+}
+
+func EntityToModel[E IEntity, M IModel](entity IEntity) utils.Result[M] {
+	var result map[string]interface{}
+
+	// Convertir la entidad a JSON (bytes).
+	data, err := json.Marshal(entity)
+	if err != nil {
+		return utils.Result[M]{Err: &cerrs.CustomError{
+			Code:    http.StatusInternalServerError,
+			Message: "Error in convert entity to model: " + err.Error(),
+			Scope:   "entity_to_model",
+		}}
+	}
+
+	// Convertir los bytes JSON a un mapa.
+	err = json.Unmarshal(data, &result)
+	if err != nil {
+		return utils.Result[M]{Err: &cerrs.CustomError{
+			Code:    http.StatusInternalServerError,
+			Message: "Error in convert entity to model: " + err.Error(),
+			Scope:   "entity_to_model",
+		}}
+	}
+
+	// Convertir el mapa a modelo.
+	model, err := FromJSON[M](result)
+	if err != nil {
+		// Si quieres ignorar los errores que contengan cierto texto:
+		if strings.Contains(err.Error(), "cannot unmarshal") {
+			// logueas el problema, pero no lo tratas como fatal
+			log.Printf("[WARN] error de parseo ignorado: %v", err)
+		} else {
+			// aquí sí es un error “real”
+			return utils.Result[M]{Err: &cerrs.CustomError{
+				Code:    http.StatusInternalServerError,
+				Message: "Error in convert entity to model: " + err.Error(),
+				Scope:   "entity_to_model",
+			}}
+		}
+	}
+
+	return utils.Result[M]{Data: model}
+}

@@ -1,29 +1,47 @@
 package controllers
 
 import (
-	"accounts/internal/api/v1/roles/domain/entities"
 	"accounts/internal/api/v1/roles/interface/dtos"
-	"accounts/internal/common/requests"
-	"accounts/internal/common/responses"
+	"foundation/domain/customctx"
+	"foundation/interface/cdtos"
+	"foundation/utils"
+	"foundation/utils/cerrs"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gofiber/fiber/v2"
 )
 
-func (c *RolesController) SignUp(ctx *gin.Context) {
+func (c *RolesController) Create(ctx *gin.Context) {
 
-	dto := requests.GetDTO[dtos.CreateRoleDTO](ctx)
+	cc := customctx.NewCustomContext(ctx.Request.Context())
 
-	c.userService.Create(entities.Role{
-		Name:        dto.Name,
-		Description: dto.Description,
-	})
-
-	customResponse := responses.Response{
-		Status: fiber.StatusOK,
-		Data:   "Nuevo role",
+	organization_id, ok := ctx.Get("organization_id")
+	if !ok {
+		res := utils.Response[string]{
+			Success:    false,
+			StatusCode: http.StatusBadRequest,
+			Error:      cc.NewError(cerrs.NewCustomError(http.StatusBadRequest, "organization_id is required", "organization_id_is_required")),
+		}
+		ctx.JSON(res.StatusCode, res.ToMapWithCustomContext(cc))
+		return
 	}
 
-	// Se almacena el objeto para que el middleware lo procese
-	ctx.JSON(fiber.StatusOK, customResponse)
+	dto := cdtos.GetDTOWithResponse[dtos.CreateRoleDTO](ctx, cc)
+	if dto.Error != nil {
+		ctx.JSON(dto.StatusCode, dto.ToMapWithCustomContext(cc))
+		return
+	}
+
+	command := dto.Data.ToCommand()
+	command.OrganizationID = organization_id.(string)
+
+	res := c.roles_service.Create(cc, command)
+
+	if res.Error != nil {
+		ctx.JSON(res.StatusCode, res.ToMapWithCustomContext(cc))
+		return
+	}
+
+	ctx.JSON(res.StatusCode, res.ToMapWithCustomContext(cc))
+
 }

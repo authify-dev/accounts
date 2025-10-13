@@ -2,12 +2,18 @@ package postgres
 
 import (
 	"accounts/internal/api/v1/codes/domain/entities"
-	"accounts/internal/db/postgres"
+	"accounts/internal/core/settings"
+	postgres_organizations "accounts/internal/db/postgres/organinizations"
 	postgres_users "accounts/internal/db/postgres/users"
-	"fmt"
+	"foundation/infrastructure/db/cgorm"
+	"foundation/utils"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+)
+
+const (
+	ENTITY_CODE_CODE = "08"
 )
 
 // --------------------------------
@@ -18,26 +24,38 @@ import (
 
 // CodeModel utiliza Model parametrizado con User.
 type CodeModel struct {
-	postgres.Model[entities.Code]
+	cgorm.Model[entities.Code]
 	Code string `gorm:"type:varchar(255);not null;" json:"code"`
 
 	UserID string `gorm:"type:varchar(50);not null" json:"user_id"`
 
 	Type string `gorm:"type:varchar(50);not null" json:"type"`
+
+	OrganizationID string `gorm:"type:uuid;not null" json:"organization_id"`
+
 	// La etiqueta foreignKey indica cuál es el campo en este modelo que es llave foránea,
 	// y references indica a qué campo del modelo relacionado hace referencia.
-	UserModel postgres_users.UserModel `gorm:"foreignKey:UserID;references:ID" json:"user"`
+	UserModel         postgres_users.UserModel                 `gorm:"foreignKey:UserID;references:ID" json:"user"`
+	OrganizationModel postgres_organizations.OrganizationModel `gorm:"foreignKey:OrganizationID;references:ID" json:"organization"`
 }
 
 func (CodeModel) TableName() string {
-	return "codes"
+	if settings.Settings.DB_SCHEMA == "" {
+		return "codes"
+	}
+	return settings.Settings.DB_SCHEMA + ".codes"
 }
 
-func (c CodeModel) GetID() string {
+func (c CodeModel) GetID() uuid.UUID {
 	return c.ID
 }
 
 func (m *CodeModel) BeforeCreate(tx *gorm.DB) (err error) {
-	m.ID = fmt.Sprintf("%s_%s", m.TableName()[:3], uuid.New().String())
+	idx, err := utils.NewUUIDx(settings.Settings.UUID_MODULE, ENTITY_CODE_CODE)
+	if err != nil {
+		return err
+	}
+	_id := idx.UUID()
+	m.ID = _id
 	return m.Model.BeforeCreate(tx)
 }

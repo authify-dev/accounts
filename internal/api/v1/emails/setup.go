@@ -2,33 +2,34 @@ package emails
 
 import (
 	"github.com/gin-gonic/gin"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
+	"accounts/internal/api/middlewares"
 	"accounts/internal/api/v1/emails/domain/services"
 	"accounts/internal/api/v1/emails/interface/controllers"
 	utils_controller "accounts/internal/common/controllers"
+	usecases "accounts/internal/context/v1/api_keys/app/use_cases"
 	"accounts/internal/core/domain/event"
 	"accounts/internal/core/infrastructure/event_bus/local"
 	"accounts/internal/core/infrastructure/event_bus/rabbit"
 	"accounts/internal/core/settings"
+	api_keys_pg "accounts/internal/db/postgres/api_keys"
 	codes "accounts/internal/db/postgres/codes"
 	emails "accounts/internal/db/postgres/emails"
 	login_methods "accounts/internal/db/postgres/login_methods"
+	pending_registrations "accounts/internal/db/postgres/pending_registrations"
 	refresh "accounts/internal/db/postgres/refresh_tokens"
 	roles "accounts/internal/db/postgres/role"
 	users "accounts/internal/db/postgres/users"
 )
 
-func SetupEmailsModule(app *gin.Engine) {
+func SetupEmailsModule(app *gin.Engine, db *gorm.DB) {
 
-	db, err := gorm.Open(postgres.Open(settings.Settings.POSTGRES_DSN), &gorm.Config{})
-	if err != nil {
-		panic("failed to connect database")
-	}
+	api_keys_repository := api_keys_pg.NewAPIKeyPostgresRepository(db)
 
 	service := services.NewEmailsService(
 		emails.NewEmailPostgresRepository(db),
+		pending_registrations.NewPendingRegistrationsPostgresRepository(db),
 		users.NewUserPostgresRepository(db),
 		roles.NewRolePostgresRepository(db),
 		login_methods.NewLoginMethodPostgresRepository(db),
@@ -45,7 +46,9 @@ func SetupEmailsModule(app *gin.Engine) {
 	controller := controllers.NewEmailsController(*service)
 
 	// Rutas de users
-	group := app.Group("/api/v1/emails")
+	group := app.Group(settings.Settings.ROOT_PATH + "/api/v1/emails")
+
+	group.Use(middlewares.APIKeyPublicAuthMiddleware(*usecases.NewValidatePublicAPIKeyUseCase(api_keys_repository)))
 
 	group.POST("/signup", controller.SignUp)
 	group.POST("/signup/resend-code", controller.SignUpResendCode)
@@ -54,6 +57,8 @@ func SetupEmailsModule(app *gin.Engine) {
 	group.POST("/signin/resend-code", controller.SignInResendCode)
 
 	group.POST("/activate", controller.Activate)
+	group.POST("/activate/v2", controller.ActivateV2)
+	group.POST("/activate/v2/set-password", controller.SetPassword)
 
 	group.POST("/reset", controller.ResetPassword)
 	group.POST("/reset-confirm", controller.ResetPasswordConfirm)

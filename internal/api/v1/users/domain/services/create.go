@@ -2,8 +2,8 @@ package services
 
 import (
 	"accounts/internal/api/v1/users/domain/entities"
-	"accounts/internal/core/domain/criteria"
 	"errors"
+	"foundation/domain/criteria"
 )
 
 func (u *UsersService) Create(user entities.User) error {
@@ -31,7 +31,7 @@ func (u *UsersService) Create(user entities.User) error {
 
 	role := roles[0]
 
-	user.RoleID = role.GetID()
+	user.RoleID = role.GetID().String()
 
 	return u.repository.Save(user).Err
 }
